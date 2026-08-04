@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, register } from '../controllers/authController.js';
+import { login, register, forgotPassword, resetPassword } from '../controllers/authController.js';
 import { listUsers, promoteUser } from '../controllers/userController.js';
 import { auth, allowRoles } from '../middlewares/auth.js';
 import { upload } from '../middlewares/upload.js';
@@ -14,6 +14,8 @@ const routes = Router();
 // Cadastro é público: qualquer um pode criar conta, mas sempre entra como DOCENTE.
 routes.post('/auth/register', register);
 routes.post('/auth/login', login);
+routes.post('/auth/forgot-password', forgotPassword);
+routes.post('/auth/reset-password', resetPassword);
 
 // --- Gerenciamento de usuários/papéis (só Diretor) ---
 routes.get('/users', auth, allowRoles('DIRETOR'), listUsers);
