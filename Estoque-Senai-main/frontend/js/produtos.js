@@ -33,7 +33,7 @@ function renderizarTabela(produtos) {
 
   tbody.innerHTML = produtos.map(function (p) {
     const foto = p.photoUrl
-      ? `<img class="thumb" src="${p.photoUrl.startsWith('http') ? p.photoUrl : 'http://127.0.0.1:3333' + p.photoUrl}" alt="${p.name}" />`
+      ? `<img class="thumb" src="${p.photoUrl.startsWith('http') ? p.photoUrl : API_ORIGIN + p.photoUrl}" alt="${p.name}" />`
       : '–';
 
     const validade = p.expirationDate || '–';
