@@ -31,15 +31,15 @@ async function carregarRelatorios() {
 
     gradeDiv.innerHTML = `
       <div class="card">
-        <h2 style="margin-bottom:12px; color:#e30613;"> Produtos Vencidos</h2>
+        <h2 style="margin-bottom:12px; color:#e30613;">Produtos Vencidos</h2>
         ${vencidosHTML}
       </div>
       <div class="card">
-        <h2 style="margin-bottom:12px; color:#f0ad00;"> Próximos ao Vencimento</h2>
+        <h2 style="margin-bottom:12px; color:#f0ad00;">Próximos ao Vencimento</h2>
         ${vencendoHTML}
       </div>
       <div class="card">
-        <h2 style="margin-bottom:12px; color:#888;"> Estoque Baixo</h2>
+        <h2 style="margin-bottom:12px; color:#888;">Estoque Baixo</h2>
         ${baixoHTML}
       </div>
     `;
@@ -50,7 +50,7 @@ async function carregarRelatorios() {
 
 function baixarRelatorio(tipo) {
   const token = localStorage.getItem('token');
-  const url = 'http://127.0.0.1:3333/api/reports/' + tipo + '?token=' + token;
+  const url = window.API_ORIGIN + '/api/reports/' + tipo + '?token=' + token;
   window.open(url, '_blank');
 }
 
