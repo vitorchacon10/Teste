@@ -38,7 +38,20 @@ const origensPermitidas = [
 export const io = new Server(server, { cors: { origin: origensPermitidas } });
 
 app.use(cors({ origin: origensPermitidas }));
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
+      connectSrc: ["'self'", 'https://res.cloudinary.com'],
+      mediaSrc: ["'self'", 'blob:'], // necessário pro leitor de código de barras usar a câmera
+      workerSrc: ["'self'", 'blob:']
+    }
+  }
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({
   extended: true

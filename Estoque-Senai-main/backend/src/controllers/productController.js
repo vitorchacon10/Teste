@@ -3,6 +3,15 @@ import dayjs from 'dayjs';
 import { Product, Movement } from '../config/models.js';
 import { io } from '../server.js';
 
+// O Postgres (produção) rejeita strings vazias ou "Invalid date" em campos
+// de data — o SQLite (dev) deixava passar. Convertemos pra null quando o
+// campo vem vazio ou inválido, já que a validade é opcional.
+function sanitizeExpirationDate(value) {
+  if (!value) return null;
+  const data = new Date(value);
+  return isNaN(data.getTime()) ? null : value;
+}
+
 export async function listProducts(req, res) {
   const { search = '', category } = req.query;
   const where = { name: { [Op.like]: `%${search}%` } };
@@ -25,6 +34,7 @@ export async function createProduct(req, res) {
 
     const product = await Product.create({
       ...req.body,
+      expirationDate: sanitizeExpirationDate(req.body.expirationDate),
       photoUrl
     });
 
@@ -52,7 +62,11 @@ export async function updateProduct(req, res) {
   const photoUrl = req.file
     ? (req.file.path?.startsWith('http') ? req.file.path : `/uploads/${req.file.filename}`)
     : product.photoUrl;
-  await product.update({ ...req.body, photoUrl });
+  await product.update({
+    ...req.body,
+    expirationDate: sanitizeExpirationDate(req.body.expirationDate),
+    photoUrl
+  });
   io.emit('products:update', { action: 'updated', product });
   res.json(product);
 }
