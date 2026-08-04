@@ -72,16 +72,21 @@ app.use((error, req, res, next) => {
 });
 
 async function seedAdmin() {
-  const email = 'admin@senai.com';
+  // Em produção, defina ADMIN_EMAIL e ADMIN_PASSWORD nas variáveis de
+  // ambiente do Render com valores únicos e fortes. Os valores abaixo só
+  // são usados como fallback pra facilitar o desenvolvimento local.
+  const email = process.env.ADMIN_EMAIL || 'admin@senai.com';
+  const senhaInicial = process.env.ADMIN_PASSWORD || '123456';
+
   const exists = await User.findOne({ where: { email } });
   if (!exists) {
     await User.create({
       name: 'Administrador',
       email,
-      password: '123456',
+      password: senhaInicial,
       role: 'DIRETOR'
     });
-    console.log('Usuário inicial criado: admin@senai.com / 123456');
+    console.log(`Usuário inicial criado: ${email}`);
   }
 }
 
