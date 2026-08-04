@@ -1,0 +1,5 @@
+Conectando ao banco...
+Coluna "solicitanteNome" adicionada em "solicitacoes_retirada" com sucesso.
+Coluna "responsavelRetirada" adicionada em "solicitacoes_retirada" com sucesso.
+Migração concluída. Solicitações antigas ficaram com esses campos vazios (não é possível preencher retroativamente, pois essa informação não existia antes).
+Script finalizado.

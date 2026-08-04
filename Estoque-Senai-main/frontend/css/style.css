@@ -1,0 +1,537 @@
+/* =============================================
+   SENAI Zerbini - Controle de Estoque
+   Aluno: 1º Ano - Desenvolvimento de Sistemas
+   ============================================= */
+
+/* ---------- RESET BÁSICO ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  color: #333;
+  font-size: 15px;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ---------- CORES SENAI ---------- */
+:root {
+  --vermelho: #e30613;
+  --vermelho-escuro: #b30000;
+  --branco: #ffffff;
+  --cinza-claro: #f0f0f0;
+  --cinza: #666;
+  --borda: #ddd;
+  --sombra: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ---------- TELA DE LOGIN ---------- */
+.pagina-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e30613;
+}
+
+.card-login {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.card-login .logo-senai {
+  font-size: 26px;
+  font-weight: bold;
+  color: #e30613;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.card-login h2 {
+  text-align: center;
+  color: #555;
+  font-size: 16px;
+  margin-bottom: 24px;
+  font-weight: normal;
+}
+
+/* ---------- CABEÇALHO ---------- */
+.cabecalho {
+  background-color: #e30613;
+  color: white;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.cabecalho-titulo {
+  font-weight: bold;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menu-link {
+  color: rgba(255,255,255,0.85);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.menu-link:hover,
+.menu-link.ativo {
+  background-color: rgba(255,255,255,0.2);
+  color: white;
+}
+
+/* ---------- CONTEÚDO PRINCIPAL ---------- */
+.conteudo {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ---------- PÁGINAS ---------- */
+.pagina {
+  display: none;
+}
+
+.pagina.ativa {
+  display: block;
+}
+
+.pagina h1 {
+  margin-bottom: 20px;
+  font-size: 22px;
+  color: #222;
+}
+
+/* ---------- CARD ---------- */
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: var(--sombra);
+}
+
+/* ---------- GRADE DE CARDS ---------- */
+.grade-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.card-stat {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: var(--sombra);
+  text-align: center;
+}
+
+.card-stat p {
+  color: #777;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.card-stat h2 {
+  font-size: 32px;
+  color: #222;
+}
+
+.card-stat h2.vermelho {
+  color: #e30613;
+}
+
+/* ---------- BOTÕES ---------- */
+.btn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.btn:hover {
+  opacity: 0.88;
+}
+
+.btn-vermelho {
+  background-color: #e30613;
+  color: white;
+}
+
+.btn-branco {
+  background-color: white;
+  color: #e30613;
+  border: 1px solid white;
+}
+
+.btn-cinza {
+  background-color: #888;
+  color: white;
+}
+
+.btn-contorno {
+  background-color: transparent;
+  color: #e30613;
+  border: 2px solid #e30613;
+}
+
+.btn-full {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.btn-pequeno {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.btn-acao {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-editar {
+  background: #f0ad00;
+  color: white;
+}
+
+.btn-excluir {
+  background: #e30613;
+  color: white;
+}
+
+/* ---------- CAMPOS DE FORMULÁRIO ---------- */
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo label {
+  display: block;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: #e30613;
+}
+
+.campo-busca {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  outline: none;
+}
+
+.campo-busca:focus {
+  border-color: #e30613;
+}
+
+/* ---------- MENSAGENS ---------- */
+.mensagem {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: none;
+}
+
+.mensagem.sucesso {
+  background: #d4edda;
+  color: #155724;
+  display: block;
+}
+
+.mensagem.erro {
+  background: #f8d7da;
+  color: #721c24;
+  display: block;
+}
+
+.mensagem-erro {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #f8d7da;
+  color: #721c24;
+  margin-bottom: 12px;
+}
+
+/* ---------- TABELA ---------- */
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tabela th {
+  background: #f5f5f5;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #555;
+}
+
+.tabela td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.tabela tr:hover {
+  background: #fafafa;
+}
+
+.thumb {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* ---------- LINHAS UTILITÁRIAS ---------- */
+.linha-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.linha-busca {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.linha-botoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* ---------- MODAL ---------- */
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-caixa {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.modal-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-cabecalho h2 {
+  font-size: 17px;
+}
+
+.btn-fechar {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #888;
+  line-height: 1;
+}
+
+.btn-fechar:hover {
+  color: #333;
+}
+
+.modal-corpo {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-rodape {
+  padding: 14px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.grade-2-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+/* ---------- SCANNER ---------- */
+.scanner-area {
+  max-width: 560px;
+}
+
+#leitor-camera {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ---------- MOVIMENTAÇÕES ---------- */
+.item-movimentacao {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.item-movimentacao:last-child {
+  border-bottom: none;
+}
+
+.badge-entrada {
+  display: inline-block;
+  background: #d4edda;
+  color: #155724;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+.badge-saida {
+  display: inline-block;
+  background: #f8d7da;
+  color: #721c24;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+/* ---------- RELATÓRIOS ---------- */
+.item-critico {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.item-critico:last-child {
+  border-bottom: none;
+}
+
+.item-critico.vermelho {
+  color: #e30613;
+  font-weight: bold;
+}
+
+/* ---------- TOAST ---------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #333;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+  max-width: 300px;
+}
+
+.toast.visivel {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ---------- RESPONSIVO ---------- */
+@media (max-width: 700px) {
+  .cabecalho {
+    flex-direction: column;
+    height: auto;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .menu {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .grade-2-colunas {
+    grid-template-columns: 1fr;
+  }
+
+  .grade-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
