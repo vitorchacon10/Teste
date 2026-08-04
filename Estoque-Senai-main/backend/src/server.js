@@ -54,7 +54,7 @@ async function seedAdmin() {
       name: 'Administrador',
       email,
       password: '123456',
-      role: 'ADMIN'
+      role: 'DIRETOR'
     });
     console.log('Usuário inicial criado: admin@senai.com / 123456');
   }
