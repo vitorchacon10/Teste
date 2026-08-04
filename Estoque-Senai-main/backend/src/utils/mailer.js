@@ -9,7 +9,10 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_APP_PASSWORD
-  }
+  },
+  connectionTimeout: 10000, // 10s para conectar no servidor do Gmail
+  greetingTimeout: 10000,   // 10s para o "handshake" inicial
+  socketTimeout: 15000      // 15s de inatividade antes de desistir
 });
 
 export async function sendMail({ to, subject, html }) {
@@ -18,10 +21,16 @@ export async function sendMail({ to, subject, html }) {
     return;
   }
 
-  await transporter.sendMail({
-    from: `"SENAI Zerbini Estoque" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html
-  });
+  try {
+    await transporter.sendMail({
+      from: `"SENAI Zerbini Estoque" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    });
+    console.log(`E-mail enviado com sucesso para ${to}`);
+  } catch (err) {
+    console.error('Erro ao enviar e-mail via Gmail:', err.message);
+    throw err; // deixa o authController tratar (ele já tem try/catch)
+  }
 }
