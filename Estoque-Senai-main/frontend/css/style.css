@@ -40,6 +40,7 @@ a {
   align-items: center;
   justify-content: center;
   background-color: #e30613;
+  padding: 16px;
 }
 
 .card-login {
@@ -107,6 +108,18 @@ a {
 .menu-link.ativo {
   background-color: rgba(255,255,255,0.2);
   color: white;
+}
+
+/* Botão hambúrguer — só aparece em telas pequenas (ver media query no fim) */
+.btn-hamburguer {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
 }
 
 /* ---------- CONTEÚDO PRINCIPAL ---------- */
@@ -373,6 +386,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
 }
 
 .modal-caixa {
@@ -513,18 +527,58 @@ a {
   opacity: 1;
 }
 
-/* ---------- RESPONSIVO ---------- */
+/* =================================================
+   RESPONSIVO — regras abaixo só entram em ação em
+   telas pequenas. Nada aqui muda o layout no desktop.
+   ================================================= */
+
+/* Tablets e celulares maiores */
 @media (max-width: 700px) {
-  .cabecalho {
-    flex-direction: column;
-    height: auto;
-    padding: 10px;
-    gap: 8px;
+  .conteudo {
+    padding: 16px;
   }
 
-  .menu {
+  /* Cabeçalho: título + botão hambúrguer numa linha só */
+  .cabecalho {
     flex-wrap: wrap;
-    justify-content: center;
+    height: auto;
+    min-height: 56px;
+    padding: 10px 16px;
+  }
+
+  .cabecalho-titulo {
+    flex: 1;
+  }
+
+  .btn-hamburguer {
+    display: block;
+  }
+
+  /* Menu vira um painel dropdown, escondido até o hambúrguer ser clicado */
+  .menu {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 4px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .menu.aberto {
+    display: flex;
+  }
+
+  .menu-link {
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  #btn-ativar-notificacoes,
+  #btn-sair {
+    width: 100%;
+    margin-top: 4px;
   }
 
   .grade-2-colunas {
@@ -533,5 +587,40 @@ a {
 
   .grade-cards {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .linha-topo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
+/* Celulares menores (retrato) */
+@media (max-width: 480px) {
+  .card-login {
+    padding: 28px 22px;
+  }
+
+  .grade-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .card-stat h2 {
+    font-size: 26px;
+  }
+
+  .modal-corpo {
+    padding: 14px;
+  }
+
+  .modal-cabecalho,
+  .modal-rodape {
+    padding: 12px 14px;
+  }
+
+  .tabela th,
+  .tabela td {
+    padding: 8px;
   }
 }

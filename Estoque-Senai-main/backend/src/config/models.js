@@ -15,6 +15,15 @@ export const User = sequelize.define('User', {
 
 User.beforeCreate(async user => { user.password = await bcrypt.hash(user.password, 10); });
 
+// Importante: sem esse hook, redefinir senha (ex: recuperação de senha)
+// salvaria a senha em texto puro, sem criptografia, sempre que o campo
+// "password" for alterado num user.update()/user.save() já existente.
+User.beforeUpdate(async user => {
+  if (user.changed('password')) {
+    user.password = await bcrypt.hash(user.password, 10);
+  }
+});
+
 export const Product = sequelize.define('Product', {
   name: { type: DataTypes.STRING, allowNull: false },
   brand: DataTypes.STRING,

@@ -18,6 +18,7 @@
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.2",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
     "pdfkit": "^0.15.2",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
@@ -27,9 +28,5 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
-  },
-  "allowScripts": {
-    "sqlite3@5.1.7": true,
-    "core-js@3.49.0": true
   }
 }
