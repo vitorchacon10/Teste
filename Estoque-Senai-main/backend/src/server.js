@@ -9,10 +9,21 @@ import { sequelize } from './config/database.js';
 import { User } from './config/models.js';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
+
+// __dirname não existe nativamente em módulos ES (import/export),
+// então recriamos ele a partir da URL do próprio arquivo.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Pasta do frontend: sobe 2 níveis (de src/ pra backend/, de backend/ pra raiz)
+// e entra em frontend/. Ajuste aqui se a estrutura de pastas mudar.
+const frontendPath = path.join(__dirname, '..', '..', 'frontend');
 
 // Aceita o Live Server em qualquer porta (5500, 5501, etc.)
 const origensPermitidas = [
@@ -34,6 +45,7 @@ app.use(express.urlencoded({
 }));
 fs.mkdirSync('src/uploads', { recursive: true });
 app.use('/uploads', express.static('src/uploads')); 
+app.use(express.static(frontendPath)); // serve index.html, cadastro.html, css/, js/
 app.use('/api', routes);
 
 io.on('connection', socket => console.log('Usuário conectado:', socket.id));
