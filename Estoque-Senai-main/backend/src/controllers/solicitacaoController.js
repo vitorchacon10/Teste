@@ -1,4 +1,5 @@
 import { SolicitacaoRetirada, Product, Movement, User } from '../config/models.js';
+import { sendMail } from '../utils/mailer.js';
 
 // Docente, Coordenador ou Diretor solicitam a retirada de um produto.
 // Fica PENDENTE até um Diretor aprovar.
@@ -35,6 +36,39 @@ export async function createSolicitacao(req, res) {
     responsavelRetirada: responsavelRetirada.trim(),
     status: 'PENDENTE'
   });
+
+  // Avisa todos os Diretores por e-mail que há uma nova solicitação
+  // aguardando aprovação. Se o envio falhar, não impede a criação da
+  // solicitação em si — só registra o erro nos logs.
+  try {
+    const diretores = await User.findAll({ where: { role: 'DIRETOR' }, attributes: ['name', 'email'] });
+
+    await Promise.all(
+      diretores
+        .filter(d => d.email)
+        .map(diretor =>
+          sendMail({
+            to: diretor.email,
+            subject: 'Nova solicitação de retirada — SENAI Zerbini Estoque',
+            html: `
+              <p>Olá, ${diretor.name}!</p>
+              <p>Uma nova solicitação de retirada foi registrada e está aguardando sua aprovação:</p>
+              <ul>
+                <li><strong>Produto:</strong> ${product.name}</li>
+                <li><strong>Quantidade:</strong> ${qtd}</li>
+                <li><strong>Solicitante:</strong> ${solicitanteNome.trim()}</li>
+                <li><strong>Responsável pela retirada:</strong> ${responsavelRetirada.trim()}</li>
+                ${sector ? `<li><strong>Setor:</strong> ${sector}</li>` : ''}
+                ${notes ? `<li><strong>Observações:</strong> ${notes}</li>` : ''}
+              </ul>
+              <p>Acesse o sistema para aprovar ou rejeitar.</p>
+            `
+          }).catch(err => console.error(`Erro ao enviar e-mail de nova solicitação para ${diretor.email}:`, err))
+        )
+    );
+  } catch (err) {
+    console.error('Erro ao buscar/notificar diretores sobre nova solicitação:', err);
+  }
 
   res.status(201).json(solicitacao);
 }
