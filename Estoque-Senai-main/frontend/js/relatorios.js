@@ -45,22 +45,32 @@ async function carregarRelatorios() {
 
     const filtroMovimentacoesHTML = `
       <div class="card">
-        <h2 style="margin-bottom:12px; color:#e30613;">Relatório de Movimentações</h2>
-        <label>Mês</label>
-        <input type="month" id="filtro-mes-mov" value="${mesAtual}">
-        <label>Produto</label>
-        <select id="filtro-produto-mov">
-          <option value="">Todos</option>
-          ${opcoesProduto}
-        </select>
-        <label>Pessoa</label>
-        <select id="filtro-pessoa-mov">
-          <option value="">Todas</option>
-          ${opcoesPessoa}
-        </select>
-        <div style="margin-top:10px;">
-          <button id="btn-excel-mov">Baixar Excel</button>
-          <button id="btn-pdf-mov">Baixar PDF</button>
+        <h2 style="margin-bottom:16px; color:#e30613;">Relatório de Movimentações</h2>
+
+        <div class="campo">
+          <label>Mês</label>
+          <input type="month" id="filtro-mes-mov" value="${mesAtual}">
+        </div>
+
+        <div class="campo">
+          <label>Produto</label>
+          <select id="filtro-produto-mov">
+            <option value="">Todos</option>
+            ${opcoesProduto}
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Pessoa</label>
+          <select id="filtro-pessoa-mov">
+            <option value="">Todas</option>
+            ${opcoesPessoa}
+          </select>
+        </div>
+
+        <div class="linha-botoes">
+          <button id="btn-excel-mov" class="btn btn-vermelho">Baixar Excel</button>
+          <button id="btn-pdf-mov" class="btn btn-contorno">Baixar PDF</button>
         </div>
       </div>
     `;

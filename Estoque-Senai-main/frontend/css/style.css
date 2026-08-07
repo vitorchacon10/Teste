@@ -505,6 +505,14 @@ a {
   font-weight: bold;
 }
 
+/* Grade de cards da tela de Relatórios (vencidos, estoque baixo,
+   filtro de movimentações), pra dar espaçamento entre eles */
+#grade-relatorios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
 /* ---------- TOAST ---------- */
 .toast {
   position: fixed;
