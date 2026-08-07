@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Esqueci minha senha – SENAI Zerbini</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="pagina-login">
+    <div class="card-login">
+      <div class="logo-senai">SENAI Zerbini</div>
+      <h2>Recuperar senha</h2>
+
+      <div id="mensagem" class="mensagem-erro" style="display:none"></div>
+
+      <p style="font-size: 0.85rem; color: #666; margin-bottom: 16px;">
+        Informe o e-mail da sua conta. Se ele estiver cadastrado, você receberá um link para criar uma nova senha.
+      </p>
+
+      <div class="campo">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" autocomplete="username" />
+      </div>
+
+      <button class="btn btn-vermelho btn-full" id="btn-enviar">Enviar link de recuperação</button>
+
+      <p style="text-align:center; margin-top: 14px; font-size: 0.85rem;">
+        <a href="index.html">Voltar para o login</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/esqueci-senha.js"></script>
+</body>
+</html>

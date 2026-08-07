@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro - SENAI Zerbini | Controle de Estoque</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="pagina-login">
+    <div class="card-login">
+      <div class="logo-senai">SENAI Zerbini</div>
+      <h2>Criar conta</h2>
+      <p style="text-align:center; color:#666; font-size:0.85rem; margin-top:-8px; margin-bottom:16px;">
+        Novas contas entram como <strong>Docente</strong>. Permissões maiores são liberadas pela Direção.
+      </p>
+
+      <div id="mensagem" class="mensagem-erro" style="display:none"></div>
+
+      <form id="form-cadastro">
+        <div class="campo">
+          <label for="name">Nome completo</label>
+          <input type="text" id="name" name="name" required autocomplete="name">
+        </div>
+
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" required autocomplete="email">
+        </div>
+
+        <div class="campo">
+          <label for="password">Senha</label>
+          <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+        </div>
+
+        <div class="campo">
+          <label for="confirmPassword">Confirmar senha</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6" autocomplete="new-password">
+        </div>
+
+        <button type="submit" class="btn btn-vermelho btn-full" id="btn-cadastrar">Cadastrar</button>
+      </form>
+
+      <p style="text-align:center; margin-top: 14px; font-size: 0.85rem;">
+        Já tem conta? <a href="index.html">Fazer login</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/cadastro.js"></script>
+</body>
+</html>
