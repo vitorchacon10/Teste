@@ -472,19 +472,28 @@ export async function reportCritical(req,res){
 
 
 // Monta o filtro comum (mês/ano, produto, pessoa, tipo) usado no
-// endpoint JSON e nas duas exportações (Excel/PDF) de movimentações
+// endpoint JSON e nas duas exportações (Excel/PDF) de movimentações.
+// Regra: sem ano = todos os períodos; só ano = ano inteiro; ano+mês = só o mês.
 function buildMovementsWhere(query) {
   const { month, year, productId, userId, type } = query;
 
   const where = {};
 
-  const refYear = year ? Number(year) : dayjs().year();
-  const refMonth = month ? Number(month) : dayjs().month() + 1; // dayjs month é 0-indexed
+  if (year) {
+    const refYear = Number(year);
 
-  const inicio = dayjs(`${refYear}-${String(refMonth).padStart(2, '0')}-01`).startOf('month').toDate();
-  const fim = dayjs(inicio).endOf('month').toDate();
-
-  where.createdAt = { [Op.between]: [inicio, fim] };
+    if (month) {
+      const refMonth = Number(month);
+      const inicio = dayjs(`${refYear}-${String(refMonth).padStart(2, '0')}-01`).startOf('month').toDate();
+      const fim = dayjs(inicio).endOf('month').toDate();
+      where.createdAt = { [Op.between]: [inicio, fim] };
+    } else {
+      const inicio = dayjs(`${refYear}-01-01`).startOf('year').toDate();
+      const fim = dayjs(inicio).endOf('year').toDate();
+      where.createdAt = { [Op.between]: [inicio, fim] };
+    }
+  }
+  // se não vier "year", não filtra por data — traz tudo
 
   if (productId) where.ProductId = productId;
   if (userId) where.UserId = userId;

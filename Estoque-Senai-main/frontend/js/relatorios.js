@@ -41,15 +41,27 @@ async function carregarRelatorios() {
       return `<option value="${p.id}">${p.name}</option>`;
     }).join('');
 
-    const mesAtual = mesAtualFormatado(); // ex: "2026-08"
+    const opcoesAno = gerarOpcoesAno();
+    const opcoesMes = gerarOpcoesMes();
 
     const filtroMovimentacoesHTML = `
       <div class="card">
         <h2 style="margin-bottom:16px; color:#e30613;">Relatório de Movimentações</h2>
 
         <div class="campo">
+          <label>Ano</label>
+          <select id="filtro-ano-mov">
+            <option value="">Todos</option>
+            ${opcoesAno}
+          </select>
+        </div>
+
+        <div class="campo">
           <label>Mês</label>
-          <input type="month" id="filtro-mes-mov" value="${mesAtual}">
+          <select id="filtro-mes-mov">
+            <option value="">Todos</option>
+            ${opcoesMes}
+          </select>
         </div>
 
         <div class="campo">
@@ -104,12 +116,25 @@ async function carregarRelatorios() {
   }
 }
 
-// Retorna o mês atual no formato exigido pelo <input type="month"> (YYYY-MM)
-function mesAtualFormatado() {
-  const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-  return `${ano}-${mes}`;
+// Gera as opções de ano do select (ano atual + 4 anteriores)
+function gerarOpcoesAno() {
+  const anoAtual = new Date().getFullYear();
+  let html = '';
+  for (let a = anoAtual; a >= anoAtual - 4; a--) {
+    html += `<option value="${a}">${a}</option>`;
+  }
+  return html;
+}
+
+// Gera as opções de mês do select
+function gerarOpcoesMes() {
+  const meses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+  return meses.map(function (nome, index) {
+    return `<option value="${index + 1}">${nome}</option>`;
+  }).join('');
 }
 
 function baixarRelatorio(tipo) {
@@ -118,17 +143,19 @@ function baixarRelatorio(tipo) {
   window.open(url, '_blank');
 }
 
-// Monta a URL do relatório mensal de movimentações (com filtros de
-// mês/ano, produto e pessoa) e abre para download, no mesmo padrão
-// de baixarRelatorio().
+// Monta a URL do relatório de movimentações com os filtros escolhidos.
+// Ano e mês agora são opcionais: sem ano = todos os períodos,
+// só ano = ano inteiro, ano + mês = só aquele mês.
 function baixarRelatorioMovimentacoes(tipo) {
   const token = localStorage.getItem('token');
-  const mesInput = document.getElementById('filtro-mes-mov').value; // formato YYYY-MM
-  const [year, month] = mesInput.split('-');
+  const year = document.getElementById('filtro-ano-mov').value;
+  const month = document.getElementById('filtro-mes-mov').value;
   const productId = document.getElementById('filtro-produto-mov').value;
   const userId = document.getElementById('filtro-pessoa-mov').value;
 
-  const params = new URLSearchParams({ token, year, month });
+  const params = new URLSearchParams({ token });
+  if (year) params.append('year', year);
+  if (month) params.append('month', month);
   if (productId) params.append('productId', productId);
   if (userId) params.append('userId', userId);
 
