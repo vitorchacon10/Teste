@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import dayjs from 'dayjs';
-import { Product, Movement } from '../config/models.js';
+import { Product, Movement, UNIDADES, UNIDADES_INTEIRAS } from '../config/models.js';
 import { io } from '../server.js';
 
 // O Postgres (produção) rejeita strings vazias ou "Invalid date" em campos
@@ -10,6 +10,20 @@ function sanitizeExpirationDate(value) {
   if (!value) return null;
   const data = new Date(value);
   return isNaN(data.getTime()) ? null : value;
+}
+
+// Garante que a unidade veio válida e que a quantidade respeita a regra
+// da unidade (UN/PCT não fracionam, G/KG/ML/L podem). Retorna a mensagem
+// de erro (string) se algo estiver errado, ou null se estiver tudo certo.
+function validarUnidadeQuantidade(unit, quantity) {
+  if (unit && !UNIDADES.includes(unit)) {
+    return `Unidade "${unit}" inválida.`;
+  }
+  const qtd = Number(quantity);
+  if (unit && UNIDADES_INTEIRAS.includes(unit) && quantity !== undefined && !Number.isInteger(qtd)) {
+    return `Produtos com unidade ${unit} não aceitam quantidade fracionada.`;
+  }
+  return null;
 }
 
 export async function listProducts(req, res) {
@@ -28,6 +42,9 @@ export async function getProductByBarcode(req, res) {
 
 export async function createProduct(req, res) {
   try {
+    const erroUnidade = validarUnidadeQuantidade(req.body.unit, req.body.quantity);
+    if (erroUnidade) return res.status(400).json({ message: erroUnidade });
+
     const photoUrl = req.file
       ? (req.file.path?.startsWith('http') ? req.file.path : `/uploads/${req.file.filename}`)
       : null;
@@ -59,6 +76,12 @@ export async function createProduct(req, res) {
 export async function updateProduct(req, res) {
   const product = await Product.findByPk(req.params.id);
   if (!product) return res.status(404).json({ message: 'Produto não encontrado.' });
+
+  const unidadeFinal = req.body.unit || product.unit;
+  const quantidadeFinal = req.body.quantity !== undefined ? req.body.quantity : product.quantity;
+  const erroUnidade = validarUnidadeQuantidade(unidadeFinal, quantidadeFinal);
+  if (erroUnidade) return res.status(400).json({ message: erroUnidade });
+
   const photoUrl = req.file
     ? (req.file.path?.startsWith('http') ? req.file.path : `/uploads/${req.file.filename}`)
     : product.photoUrl;
@@ -83,7 +106,12 @@ export async function moveStock(req, res) {
   const { productId, barcode, type, quantity, responsible, sector, notes } = req.body;
   const product = productId ? await Product.findByPk(productId) : await Product.findOne({ where: { barcode } });
   if (!product) return res.status(404).json({ message: 'Produto não encontrado.' });
+
   const amount = Number(quantity);
+  if (UNIDADES_INTEIRAS.includes(product.unit) && !Number.isInteger(amount)) {
+    return res.status(400).json({ message: `Produtos com unidade ${product.unit} não aceitam quantidade fracionada.` });
+  }
+
   const previousQuantity = product.quantity;
   const newQuantity = type === 'ENTRADA' ? previousQuantity + amount : previousQuantity - amount;
   if (newQuantity < 0) return res.status(400).json({ message: 'Estoque insuficiente.' });

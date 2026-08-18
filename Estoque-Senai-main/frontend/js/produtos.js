@@ -3,9 +3,24 @@
 
 let listaProdutos = []; // guarda os produtos carregados
 
+// Rótulos amigáveis e regra de fracionamento por unidade
+const ROTULO_UNIDADE_PRODUTO = {
+  UN: 'un',
+  PCT: 'pct',
+  G: 'g',
+  KG: 'kg',
+  ML: 'ml',
+  L: 'L'
+};
+const UNIDADES_INTEIRAS_PRODUTO = ['UN', 'PCT'];
+
 function formatarMoeda(valor) {
   const numero = Number(valor) || 0;
   return 'R$ ' + numero.toFixed(2).replace('.', ',');
+}
+
+function formatarUnidadeProduto(unit) {
+  return ROTULO_UNIDADE_PRODUTO[unit] || unit || '-';
 }
 
 async function carregarProdutos() {
@@ -21,7 +36,7 @@ function renderizarTabela(produtos) {
   const tbody = document.getElementById('corpo-tabela-produtos');
 
   if (produtos.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Nenhum produto cadastrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#999;">Nenhum produto cadastrado.</td></tr>';
     return;
   }
 
@@ -57,6 +72,7 @@ function renderizarTabela(produtos) {
         <td><strong>${p.name}</strong></td>
         <td>${p.brand || '–'}</td>
         <td>${p.quantity}</td>
+        <td>${formatarUnidadeProduto(p.unit)}</td>
         <td>${formatarMoeda(p.price)}</td>
         <td>${validade}</td>
         <td>${p.barcode || '–'}</td>
@@ -79,6 +95,15 @@ document.getElementById('busca-produto').addEventListener('input', function () {
   renderizarTabela(filtrado);
 });
 
+// Ajusta o "step" do campo de quantidade conforme a unidade escolhida:
+// inteiro (1) para Unidade/Pacote, decimal (0.01) para os fracionáveis.
+function ajustarStepQuantidade() {
+  const unidade = document.getElementById('produto-unidade').value;
+  const inputQtd = document.getElementById('produto-quantidade');
+  inputQtd.step = UNIDADES_INTEIRAS_PRODUTO.includes(unidade) ? '1' : '0.01';
+}
+document.getElementById('produto-unidade').addEventListener('change', ajustarStepQuantidade);
+
 // ---- MODAL ----
 
 function abrirModalNovo() {
@@ -97,6 +122,7 @@ function abrirModalEdicao(id) {
   document.getElementById('produto-nome').value = produto.name || '';
   document.getElementById('produto-marca').value = produto.brand || '';
   document.getElementById('produto-quantidade').value = produto.quantity || 0;
+  document.getElementById('produto-unidade').value = produto.unit || 'UN';
   document.getElementById('produto-preco').value = produto.price || 0;
   document.getElementById('produto-qtd-min').value = produto.minQuantity || 5;
   document.getElementById('produto-validade').value = produto.expirationDate || '';
@@ -104,6 +130,7 @@ function abrirModalEdicao(id) {
   document.getElementById('produto-categoria').value = produto.category || '';
   document.getElementById('produto-local').value = produto.location || '';
 
+  ajustarStepQuantidade();
   document.getElementById('modal-produto').style.display = 'flex';
 }
 
@@ -117,15 +144,24 @@ function limparFormularioProduto() {
   campos.forEach(function (id) {
     document.getElementById(id).value = '';
   });
+  document.getElementById('produto-unidade').value = 'UN';
   document.getElementById('produto-foto').value = '';
+  ajustarStepQuantidade();
 }
 
 async function salvarProduto() {
   const id = document.getElementById('produto-id').value;
   const nome = document.getElementById('produto-nome').value.trim();
+  const unidade = document.getElementById('produto-unidade').value;
+  const quantidade = document.getElementById('produto-quantidade').value || 0;
 
   if (!nome) {
     mostrarToast('O nome do produto é obrigatório!', true);
+    return;
+  }
+
+  if (UNIDADES_INTEIRAS_PRODUTO.includes(unidade) && !Number.isInteger(Number(quantidade))) {
+    mostrarToast(`Produtos com unidade "${formatarUnidadeProduto(unidade)}" não aceitam quantidade fracionada.`, true);
     return;
   }
 
@@ -133,7 +169,8 @@ async function salvarProduto() {
   const fd = new FormData();
   fd.append('name', nome);
   fd.append('brand', document.getElementById('produto-marca').value);
-  fd.append('quantity', document.getElementById('produto-quantidade').value || 0);
+  fd.append('quantity', quantidade);
+  fd.append('unit', unidade);
   fd.append('price', document.getElementById('produto-preco').value || 0);
   fd.append('minQuantity', document.getElementById('produto-qtd-min').value || 5);
   fd.append('expirationDate', document.getElementById('produto-validade').value);

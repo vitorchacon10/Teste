@@ -1,6 +1,20 @@
 // js/relatorios.js
 // Página de Relatórios
 
+// Rótulos amigáveis para cada unidade de medida (mesmo padrão usado em solicitacoes.js)
+const ROTULO_UNIDADE_RELATORIO = {
+  UN: 'un',
+  PCT: 'pct',
+  G: 'g',
+  KG: 'kg',
+  ML: 'ml',
+  L: 'L'
+};
+
+function formatarUnidade(unit) {
+  return ROTULO_UNIDADE_RELATORIO[unit] || unit || '';
+}
+
 async function carregarRelatorios() {
   const gradeDiv = document.getElementById('grade-relatorios');
   gradeDiv.innerHTML = '<p style="color:#999">Carregando...</p>';
@@ -22,10 +36,10 @@ async function carregarRelatorios() {
         }).join('')
       : '<p style="color:#999; font-size:13px;">Nenhum produto vencendo em breve.</p>';
 
-    // Estoque baixo
+    // Estoque baixo — agora mostra a unidade junto da quantidade (ex: "0.5 kg")
     const baixoHTML = dados.lowStock.length > 0
       ? dados.lowStock.map(function (p) {
-          return `<div class="item-critico">${p.name} – qtd: ${p.quantity}</div>`;
+          return `<div class="item-critico">${p.name} – qtd: ${p.quantity} ${formatarUnidade(p.unit)}</div>`;
         }).join('')
       : '<p style="color:#999; font-size:13px;">Todos os produtos estão com estoque ok.</p>';
 

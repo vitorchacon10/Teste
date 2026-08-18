@@ -1,14 +1,49 @@
-import { SolicitacaoRetirada, Product, Movement, User } from '../config/models.js';
+import { SolicitacaoRetirada, SolicitacaoItem, Product, Movement, User, UNIDADES_INTEIRAS } from '../config/models.js';
+import { sequelize } from '../config/database.js';
 import { sendMail } from '../utils/mailer.js';
 
-// Docente, Coordenador ou Diretor solicitam a retirada de um produto.
+// Valida um item de solicitação e retorna o produto correspondente.
+// Lança um erro com "status" e "message" prontos para resposta HTTP.
+async function validarItem(item) {
+  const { productId, quantity } = item;
+  const qtd = Number(quantity);
+
+  if (!productId || !qtd || qtd <= 0) {
+    const err = new Error('Cada item precisa de um produto e uma quantidade válida.');
+    err.status = 400;
+    throw err;
+  }
+
+  const product = await Product.findByPk(productId);
+  if (!product) {
+    const err = new Error('Produto não encontrado.');
+    err.status = 404;
+    throw err;
+  }
+
+  // Unidades como UN e PCT não fracionam: quantidade tem que ser inteira.
+  if (UNIDADES_INTEIRAS.includes(product.unit) && !Number.isInteger(qtd)) {
+    const err = new Error(`"${product.name}" é medido em ${product.unit} e não aceita quantidade fracionada.`);
+    err.status = 400;
+    throw err;
+  }
+
+  if (qtd > product.quantity) {
+    const err = new Error(`Quantidade solicitada de "${product.name}" é maior que o estoque disponível (${product.quantity} ${product.unit}).`);
+    err.status = 400;
+    throw err;
+  }
+
+  return { product, qtd };
+}
+
+// Docente, Coordenador ou Diretor solicitam a retirada de um ou mais produtos.
 // Fica PENDENTE até um Diretor aprovar.
 export async function createSolicitacao(req, res) {
-  const { productId, quantity, sector, notes, solicitanteNome, responsavelRetirada } = req.body;
+  const { items, sector, notes, solicitanteNome, responsavelRetirada } = req.body;
 
-  const qtd = Number(quantity);
-  if (!productId || !qtd || qtd <= 0) {
-    return res.status(400).json({ message: 'Informe o produto e uma quantidade válida.' });
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: 'Informe ao menos um produto na solicitação.' });
   }
 
   if (!solicitanteNome || !solicitanteNome.trim()) {
@@ -19,22 +54,36 @@ export async function createSolicitacao(req, res) {
     return res.status(400).json({ message: 'Informe o nome do responsável pela retirada.' });
   }
 
-  const product = await Product.findByPk(productId);
-  if (!product) return res.status(404).json({ message: 'Produto não encontrado.' });
-
-  if (qtd > product.quantity) {
-    return res.status(400).json({ message: 'Quantidade solicitada maior que o estoque disponível.' });
+  // Valida todos os itens antes de criar qualquer coisa no banco.
+  let itensValidados;
+  try {
+    itensValidados = await Promise.all(items.map(validarItem));
+  } catch (err) {
+    return res.status(err.status || 400).json({ message: err.message });
   }
 
-  const solicitacao = await SolicitacaoRetirada.create({
-    ProductId: product.id,
-    requesterId: req.user.id,
-    quantity: qtd,
-    sector: sector || null,
-    notes: notes || null,
-    solicitanteNome: solicitanteNome.trim(),
-    responsavelRetirada: responsavelRetirada.trim(),
-    status: 'PENDENTE'
+  // Cria o cabeçalho + os itens numa transação: ou vai tudo, ou não vai nada.
+  const solicitacao = await sequelize.transaction(async (t) => {
+    const nova = await SolicitacaoRetirada.create({
+      requesterId: req.user.id,
+      sector: sector || null,
+      notes: notes || null,
+      solicitanteNome: solicitanteNome.trim(),
+      responsavelRetirada: responsavelRetirada.trim(),
+      status: 'PENDENTE'
+    }, { transaction: t });
+
+    await SolicitacaoItem.bulkCreate(
+      itensValidados.map(({ product, qtd }) => ({
+        SolicitacaoRetiradaId: nova.id,
+        ProductId: product.id,
+        quantity: qtd,
+        unit: product.unit
+      })),
+      { transaction: t }
+    );
+
+    return nova;
   });
 
   // Avisa todos os Diretores por e-mail que há uma nova solicitação
@@ -42,6 +91,10 @@ export async function createSolicitacao(req, res) {
   // solicitação em si — só registra o erro nos logs.
   try {
     const diretores = await User.findAll({ where: { role: 'DIRETOR' }, attributes: ['name', 'email'] });
+
+    const listaItensHtml = itensValidados
+      .map(({ product, qtd }) => `<li><strong>${product.name}:</strong> ${qtd} ${product.unit}</li>`)
+      .join('');
 
     await Promise.all(
       diretores
@@ -53,9 +106,8 @@ export async function createSolicitacao(req, res) {
             html: `
               <p>Olá, ${diretor.name}!</p>
               <p>Uma nova solicitação de retirada foi registrada e está aguardando sua aprovação:</p>
+              <ul>${listaItensHtml}</ul>
               <ul>
-                <li><strong>Produto:</strong> ${product.name}</li>
-                <li><strong>Quantidade:</strong> ${qtd}</li>
                 <li><strong>Solicitante:</strong> ${solicitanteNome.trim()}</li>
                 <li><strong>Responsável pela retirada:</strong> ${responsavelRetirada.trim()}</li>
                 ${sector ? `<li><strong>Setor:</strong> ${sector}</li>` : ''}
@@ -81,7 +133,10 @@ export async function listSolicitacoes(req, res) {
   const solicitacoes = await SolicitacaoRetirada.findAll({
     where,
     include: [
-      { model: Product, attributes: ['id', 'name', 'quantity', 'category'] },
+      {
+        model: SolicitacaoItem,
+        include: [{ model: Product, attributes: ['id', 'name', 'quantity', 'unit', 'category'] }]
+      },
       { model: User, as: 'requester', attributes: ['id', 'name', 'email', 'role'] },
       { model: User, as: 'approver', attributes: ['id', 'name'] }
     ],
@@ -91,39 +146,51 @@ export async function listSolicitacoes(req, res) {
   res.json(solicitacoes);
 }
 
-// Só Diretor. Aprova, dá baixa no estoque e registra a movimentação.
+// Só Diretor. Aprova, dá baixa no estoque de cada item e registra a movimentação.
 export async function approveSolicitacao(req, res) {
-  const solicitacao = await SolicitacaoRetirada.findByPk(req.params.id, { include: [Product] });
+  const solicitacao = await SolicitacaoRetirada.findByPk(req.params.id, {
+    include: [{ model: SolicitacaoItem, include: [Product] }]
+  });
   if (!solicitacao) return res.status(404).json({ message: 'Solicitação não encontrada.' });
   if (solicitacao.status !== 'PENDENTE') {
     return res.status(400).json({ message: 'Esta solicitação já foi processada.' });
   }
 
-  const product = solicitacao.Product;
-  if (solicitacao.quantity > product.quantity) {
-    return res.status(400).json({ message: 'Estoque insuficiente para aprovar esta solicitação.' });
+  // Revalida o estoque de todos os itens antes de aprovar qualquer um
+  // (pode ter mudado desde que a solicitação foi criada).
+  for (const item of solicitacao.SolicitacaoItems) {
+    if (item.quantity > item.Product.quantity) {
+      return res.status(400).json({
+        message: `Estoque insuficiente para aprovar "${item.Product.name}" (disponível: ${item.Product.quantity} ${item.Product.unit}).`
+      });
+    }
   }
 
-  const previousQuantity = product.quantity;
-  product.quantity = previousQuantity - solicitacao.quantity;
-  await product.save();
+  await sequelize.transaction(async (t) => {
+    for (const item of solicitacao.SolicitacaoItems) {
+      const product = item.Product;
+      const previousQuantity = product.quantity;
+      product.quantity = previousQuantity - item.quantity;
+      await product.save({ transaction: t });
 
-  await Movement.create({
-    type: 'SAIDA',
-    quantity: solicitacao.quantity,
-    previousQuantity,
-    newQuantity: product.quantity,
-    responsible: solicitacao.responsavelRetirada,
-    sector: solicitacao.sector,
-    notes: `Solicitação #${solicitacao.id} — solicitada por ${solicitacao.solicitanteNome}, retirada por ${solicitacao.responsavelRetirada}. Aprovada por ${req.user.name}`,
-    ProductId: product.id,
-    UserId: req.user.id
+      await Movement.create({
+        type: 'SAIDA',
+        quantity: item.quantity,
+        previousQuantity,
+        newQuantity: product.quantity,
+        responsible: solicitacao.responsavelRetirada,
+        sector: solicitacao.sector,
+        notes: `Solicitação #${solicitacao.id} — solicitada por ${solicitacao.solicitanteNome}, retirada por ${solicitacao.responsavelRetirada}. Aprovada por ${req.user.name}`,
+        ProductId: product.id,
+        UserId: req.user.id
+      }, { transaction: t });
+    }
+
+    solicitacao.status = 'APROVADA';
+    solicitacao.approverId = req.user.id;
+    solicitacao.approvedAt = new Date();
+    await solicitacao.save({ transaction: t });
   });
-
-  solicitacao.status = 'APROVADA';
-  solicitacao.approverId = req.user.id;
-  solicitacao.approvedAt = new Date();
-  await solicitacao.save();
 
   res.json({ message: 'Solicitação aprovada e estoque atualizado.', solicitacao });
 }

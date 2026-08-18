@@ -5,6 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SENAI Zerbini – Controle de Estoque</title>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .linha-item-solicitacao {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .linha-item-solicitacao .item-produto {
+      flex: 2;
+    }
+    .linha-item-solicitacao .item-quantidade {
+      flex: 1;
+      min-width: 70px;
+    }
+    .linha-item-solicitacao .item-unidade {
+      min-width: 28px;
+      font-size: 0.85em;
+      color: #888;
+    }
+  </style>
 </head>
 <body>
 
@@ -100,6 +120,7 @@
                   <th>Produto</th>
                   <th>Marca</th>
                   <th>Qtd</th>
+                  <th>Unidade</th>
                   <th>Preço</th>
                   <th>Validade</th>
                   <th>Código</th>
@@ -164,7 +185,10 @@
           </div>
           <div class="campo">
             <label for="entrega-qtd">Quantidade</label>
-            <input type="number" id="entrega-qtd" value="1" min="1" />
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="entrega-qtd" value="1" min="0" step="1" style="flex:1;" />
+              <span id="entrega-unidade" style="font-size:0.85em; color:#888;"></span>
+            </div>
           </div>
           <div class="campo">
             <label for="entrega-assinatura">Assinatura digital (URL opcional)</label>
@@ -181,16 +205,15 @@
 
         <div class="card" style="max-width: 520px;">
           <h2>Nova solicitação</h2>
-          <div class="campo">
-            <label for="sol-produto">Produto</label>
-            <select id="sol-produto">
-              <option value="">Selecione um produto...</option>
-            </select>
+
+          <label style="display:block; margin-bottom:6px;">Produtos</label>
+          <div id="sol-itens-container">
+            <!-- linhas de "produto + quantidade" geradas pelo JS -->
           </div>
-          <div class="campo">
-            <label for="sol-quantidade">Quantidade</label>
-            <input type="number" id="sol-quantidade" value="1" min="1" />
-          </div>
+          <button type="button" id="btn-adicionar-item-solicitacao" class="btn btn-cinza btn-pequeno" style="margin-bottom: 14px;">
+            + Adicionar produto
+          </button>
+
           <div class="campo">
             <label for="sol-solicitante">Solicitante</label>
             <input type="text" id="sol-solicitante" placeholder="Nome de quem está pedindo" />
@@ -217,8 +240,7 @@
             <table class="tabela" id="tabela-solicitacoes">
               <thead>
                 <tr>
-                  <th>Produto</th>
-                  <th>Qtd</th>
+                  <th>Produto(s)</th>
                   <th>Setor</th>
                   <th>Solicitante</th>
                   <th>Responsável pela Retirada</th>
@@ -293,7 +315,18 @@
           </div>
           <div class="campo">
             <label for="produto-quantidade">Quantidade</label>
-            <input type="number" id="produto-quantidade" min="0" />
+            <input type="number" id="produto-quantidade" min="0" step="1" />
+          </div>
+          <div class="campo">
+            <label for="produto-unidade">Unidade de medida</label>
+            <select id="produto-unidade">
+              <option value="UN">Unidade</option>
+              <option value="PCT">Pacote</option>
+              <option value="G">Grama (g)</option>
+              <option value="KG">Quilograma (kg)</option>
+              <option value="ML">Mililitro (mL)</option>
+              <option value="L">Litro (L)</option>
+            </select>
           </div>
           <div class="campo">
             <label for="produto-preco">Preço Unitário (R$)</label>

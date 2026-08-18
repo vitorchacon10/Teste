@@ -3,6 +3,20 @@
 
 let graficoBarras = null; // referência ao gráfico Chart.js
 
+// Rótulos amigáveis para cada unidade de medida (mesmo padrão dos outros arquivos)
+const ROTULO_UNIDADE_DASHBOARD = {
+  UN: 'un',
+  PCT: 'pct',
+  G: 'g',
+  KG: 'kg',
+  ML: 'ml',
+  L: 'L'
+};
+
+function formatarUnidadeDashboard(unit) {
+  return ROTULO_UNIDADE_DASHBOARD[unit] || unit || '';
+}
+
 async function carregarDashboard() {
   try {
     const dados = await api.get('/dashboard');
@@ -70,10 +84,11 @@ async function carregarDashboard() {
         : '<span class="badge-saida">SAÍDA</span>';
       const data = new Date(m.createdAt).toLocaleString('pt-BR');
       const produto = m.Product ? m.Product.name : '–';
+      const unidade = m.Product ? formatarUnidadeDashboard(m.Product.unit) : '';
       const responsavel = m.responsible ? m.responsible : 'Não informado';
       return `
         <div class="item-movimentacao">
-          ${tipo} <strong>${produto}</strong> | Qtd: ${m.quantity} | ${data}
+          ${tipo} <strong>${produto}</strong> | Qtd: ${m.quantity} ${unidade} | ${data}
           <br><span style="font-size:12px; color:#777;">Responsável: ${responsavel}${m.sector ? ' · Setor: ' + m.sector : ''}</span>
         </div>  
       `;
