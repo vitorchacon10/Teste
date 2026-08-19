@@ -102,9 +102,12 @@ document.getElementById('btn-entrada').addEventListener('click', function () {
   movimentarEstoque('ENTRADA');
 });
 
-document.getElementById('btn-saida').addEventListener('click', function () {
-  movimentarEstoque('SAIDA');
-});
+const btnSaidaScanner = document.getElementById('btn-saida');
+if (btnSaidaScanner) {
+  btnSaidaScanner.addEventListener('click', function () {
+    movimentarEstoque('SAIDA');
+  });
+}
 
 // Quando o código lido não existe no banco: leva o usuário pra tela de
 // Produtos e já abre o modal de cadastro com o código de barras preenchido.

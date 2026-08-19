@@ -44,6 +44,9 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      // 'unsafe-inline' aqui é necessário porque produtos.js gera botões
+      // com onclick="..." direto no HTML (ex: Editar/Excluir na tabela).
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
       connectSrc: ["'self'", 'https://res.cloudinary.com'],

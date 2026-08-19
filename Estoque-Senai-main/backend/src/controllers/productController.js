@@ -19,6 +19,15 @@ function sanitizePurchaseDate(value) {
   return isNaN(data.getTime()) ? null : value;
 }
 
+// O campo barcode é unique no banco. Se ficar como string vazia "" em mais
+// de um produto, o Postgres rejeita (duas strings vazias são "iguais").
+// Convertendo pra null, o banco permite vários produtos sem código de barras,
+// já que NULL nunca é considerado igual a outro NULL na constraint unique.
+function sanitizeBarcode(value) {
+  if (!value || !value.trim()) return null;
+  return value.trim();
+}
+
 // Garante que a unidade veio válida e que a quantidade respeita a regra
 // da unidade (UN/PCT não fracionam, G/KG/ML/L podem). Retorna a mensagem
 // de erro (string) se algo estiver errado, ou null se estiver tudo certo.
@@ -60,6 +69,7 @@ export async function createProduct(req, res) {
       ...req.body,
       expirationDate: sanitizeExpirationDate(req.body.expirationDate),
       purchaseDate: sanitizePurchaseDate(req.body.purchaseDate),
+      barcode: sanitizeBarcode(req.body.barcode),
       photoUrl
     });
 
@@ -75,8 +85,15 @@ export async function createProduct(req, res) {
     console.error('ERRO AO CADASTRAR PRODUTO');
     console.error(error);
 
+    // Erros de validação do Sequelize (ex: código de barras duplicado)
+    // vêm com um array "errors" detalhando qual campo e por quê.
+    // Sem isso, o front só recebe a mensagem genérica "Validation error".
+    const detalhe = error.errors && error.errors.length
+      ? error.errors.map(e => `${e.path}: ${e.message}`).join(' | ')
+      : error.message;
+
     return res.status(500).json({
-      message: error.message
+      message: detalhe
     });
   }
 }
@@ -97,6 +114,7 @@ export async function updateProduct(req, res) {
     ...req.body,
     expirationDate: sanitizeExpirationDate(req.body.expirationDate),
     purchaseDate: sanitizePurchaseDate(req.body.purchaseDate),
+    barcode: sanitizeBarcode(req.body.barcode),
     photoUrl
   });
   io.emit('products:update', { action: 'updated', product });
