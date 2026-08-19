@@ -113,6 +113,14 @@ function abrirModalNovo() {
   document.getElementById('modal-produto').style.display = 'flex';
 }
 
+// Usada pelo scanner: quando um código de barras é lido e não existe
+// nenhum produto cadastrado com ele, abre o modal de cadastro já com
+// o código preenchido, pra não precisar digitar de novo.
+function abrirModalNovoComCodigo(codigo) {
+  abrirModalNovo();
+  document.getElementById('produto-codigo').value = codigo || '';
+}
+
 function abrirModalEdicao(id) {
   const produto = listaProdutos.find(function (p) { return p.id === id; });
   if (!produto) return;
@@ -129,6 +137,10 @@ function abrirModalEdicao(id) {
   document.getElementById('produto-codigo').value = produto.barcode || '';
   document.getElementById('produto-categoria').value = produto.category || '';
   document.getElementById('produto-local').value = produto.location || '';
+  document.getElementById('produto-nota-fiscal').value = produto.invoiceNumber || '';
+  document.getElementById('produto-local-compra').value = produto.purchaseLocation || '';
+  document.getElementById('produto-cnpj').value = produto.cnpj || '';
+  document.getElementById('produto-data-compra').value = produto.purchaseDate || '';
 
   ajustarStepQuantidade();
   document.getElementById('modal-produto').style.display = 'flex';
@@ -140,7 +152,8 @@ function fecharModal() {
 
 function limparFormularioProduto() {
   const campos = ['produto-nome','produto-marca','produto-quantidade','produto-preco','produto-qtd-min',
-    'produto-validade','produto-codigo','produto-categoria','produto-local'];
+    'produto-validade','produto-codigo','produto-categoria','produto-local',
+    'produto-nota-fiscal','produto-local-compra','produto-cnpj','produto-data-compra'];
   campos.forEach(function (id) {
     document.getElementById(id).value = '';
   });
@@ -177,6 +190,10 @@ async function salvarProduto() {
   fd.append('barcode', document.getElementById('produto-codigo').value);
   fd.append('category', document.getElementById('produto-categoria').value);
   fd.append('location', document.getElementById('produto-local').value);
+  fd.append('invoiceNumber', document.getElementById('produto-nota-fiscal').value);
+  fd.append('purchaseLocation', document.getElementById('produto-local-compra').value);
+  fd.append('cnpj', document.getElementById('produto-cnpj').value);
+  fd.append('purchaseDate', document.getElementById('produto-data-compra').value);
 
   const fotoInput = document.getElementById('produto-foto');
   if (fotoInput.files[0]) {

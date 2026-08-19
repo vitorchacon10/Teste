@@ -90,16 +90,22 @@ async function seedAdmin() {
   }
 }
 
-async function migrateUnitColumn() {
+// Migração automática: roda toda vez que o servidor sobe, mas é segura
+// porque o IF NOT EXISTS só cria a coluna se ela ainda não existir.
+async function migrateProductColumns() {
   await sequelize.query(`
     ALTER TABLE products ADD COLUMN IF NOT EXISTS unit VARCHAR(10) NOT NULL DEFAULT 'UN';
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS "invoiceNumber" VARCHAR(255);
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS "purchaseLocation" VARCHAR(255);
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(20);
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS "purchaseDate" DATE;
   `);
-  console.log('Coluna unit verificada/criada com sucesso');
+  console.log('Colunas de produto (unit, nota fiscal, local, cnpj, data da compra) verificadas/criadas com sucesso');
 }
 
 const PORT = process.env.PORT || 3333;
 sequelize.sync()
-  .then(migrateUnitColumn)
+  .then(migrateProductColumns)
   .then(seedAdmin)
   .then(() => server.listen(PORT, () => console.log(`API rodando em http://localhost:${PORT}`)))
   .catch(error => {

@@ -32,11 +32,13 @@ function pararScanner() {
 async function buscarProdutoPorCodigo(codigo) {
   const msgDiv = document.getElementById('msg-scanner');
   const resultDiv = document.getElementById('resultado-produto');
+  const btnCadastrar = document.getElementById('btn-cadastrar-do-scanner');
 
   codigo = codigo || document.getElementById('campo-codigo').value.trim();
 
   if (!codigo) {
     mostrarMensagem(msgDiv, 'Digite um código de barras.', 'erro');
+    btnCadastrar.style.display = 'none';
     return;
   }
 
@@ -46,11 +48,15 @@ async function buscarProdutoPorCodigo(codigo) {
     document.getElementById('nome-produto-scan').textContent = produtoScan.name;
     document.getElementById('qtd-produto-scan').textContent = produtoScan.quantity;
     resultDiv.style.display = 'block';
+    btnCadastrar.style.display = 'none';
     mostrarMensagem(msgDiv, 'Produto encontrado!', 'sucesso');
   } catch (err) {
     produtoScan = null;
     resultDiv.style.display = 'none';
     mostrarMensagem(msgDiv, 'Produto não cadastrado.', 'erro');
+    // Mostra o botão pra ir direto pro cadastro com o código já preenchido
+    btnCadastrar.style.display = 'inline-block';
+    btnCadastrar.dataset.codigo = codigo;
   }
 }
 
@@ -98,4 +104,16 @@ document.getElementById('btn-entrada').addEventListener('click', function () {
 
 document.getElementById('btn-saida').addEventListener('click', function () {
   movimentarEstoque('SAIDA');
+});
+
+// Quando o código lido não existe no banco: leva o usuário pra tela de
+// Produtos e já abre o modal de cadastro com o código de barras preenchido.
+document.getElementById('btn-cadastrar-do-scanner').addEventListener('click', function () {
+  const codigo = this.dataset.codigo || document.getElementById('campo-codigo').value.trim();
+
+  // Ativa a aba/página "Produtos" (mesmo mecanismo usado pelos links do menu)
+  const linkProdutos = document.querySelector('.menu-link[data-pagina="produtos"]');
+  if (linkProdutos) linkProdutos.click();
+
+  abrirModalNovoComCodigo(codigo);
 });

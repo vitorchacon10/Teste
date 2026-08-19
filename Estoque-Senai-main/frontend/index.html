@@ -151,6 +151,10 @@
 
           <div id="msg-scanner" class="mensagem"></div>
 
+          <button class="btn btn-vermelho" id="btn-cadastrar-do-scanner" style="display:none; margin-top:12px;">
+            Cadastrar novo produto
+          </button>
+
           <div id="resultado-produto" style="display:none" class="card" style="margin-top:12px;">
             <h2 id="nome-produto-scan"></h2>
             <p>Quantidade atual: <strong id="qtd-produto-scan"></strong></p>
@@ -351,6 +355,22 @@
           <div class="campo">
             <label for="produto-local">Localização</label>
             <input type="text" id="produto-local" />
+          </div>
+          <div class="campo">
+            <label for="produto-nota-fiscal">Número da Nota Fiscal</label>
+            <input type="text" id="produto-nota-fiscal" />
+          </div>
+          <div class="campo">
+            <label for="produto-local-compra">Local da Compra</label>
+            <input type="text" id="produto-local-compra" />
+          </div>
+          <div class="campo">
+            <label for="produto-cnpj">CNPJ do Fornecedor</label>
+            <input type="text" id="produto-cnpj" placeholder="00.000.000/0000-00" />
+          </div>
+          <div class="campo">
+            <label for="produto-data-compra">Data da Compra</label>
+            <input type="date" id="produto-data-compra" />
           </div>
         </div>
         <div class="campo" style="margin-top: 8px;">

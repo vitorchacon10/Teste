@@ -5,8 +5,15 @@ import { io } from '../server.js';
 
 // O Postgres (produção) rejeita strings vazias ou "Invalid date" em campos
 // de data — o SQLite (dev) deixava passar. Convertemos pra null quando o
-// campo vem vazio ou inválido, já que a validade é opcional.
+// campo vem vazio ou inválido, já que a validade/data da compra é opcional.
 function sanitizeExpirationDate(value) {
+  if (!value) return null;
+  const data = new Date(value);
+  return isNaN(data.getTime()) ? null : value;
+}
+
+// Mesma lógica de sanitizeExpirationDate, usada para o campo de data da compra.
+function sanitizePurchaseDate(value) {
   if (!value) return null;
   const data = new Date(value);
   return isNaN(data.getTime()) ? null : value;
@@ -52,6 +59,7 @@ export async function createProduct(req, res) {
     const product = await Product.create({
       ...req.body,
       expirationDate: sanitizeExpirationDate(req.body.expirationDate),
+      purchaseDate: sanitizePurchaseDate(req.body.purchaseDate),
       photoUrl
     });
 
@@ -88,6 +96,7 @@ export async function updateProduct(req, res) {
   await product.update({
     ...req.body,
     expirationDate: sanitizeExpirationDate(req.body.expirationDate),
+    purchaseDate: sanitizePurchaseDate(req.body.purchaseDate),
     photoUrl
   });
   io.emit('products:update', { action: 'updated', product });

@@ -63,6 +63,15 @@ async function carregarRelatorios() {
         <h2 style="margin-bottom:16px; color:#e30613;">Relatório de Movimentações</h2>
 
         <div class="campo">
+          <label>Tipo</label>
+          <select id="filtro-tipo-mov">
+            <option value="">Entradas e Saídas</option>
+            <option value="ENTRADA">Somente Entradas</option>
+            <option value="SAIDA">Somente Saídas</option>
+          </select>
+        </div>
+
+        <div class="campo">
           <label>Ano</label>
           <select id="filtro-ano-mov">
             <option value="">Todos</option>
@@ -158,16 +167,19 @@ function baixarRelatorio(tipo) {
 }
 
 // Monta a URL do relatório de movimentações com os filtros escolhidos.
-// Ano e mês agora são opcionais: sem ano = todos os períodos,
+// Ano e mês são opcionais: sem ano = todos os períodos,
 // só ano = ano inteiro, ano + mês = só aquele mês.
+// Tipo também é opcional: sem tipo = entradas e saídas (comportamento padrão do backend).
 function baixarRelatorioMovimentacoes(tipo) {
   const token = localStorage.getItem('token');
+  const type = document.getElementById('filtro-tipo-mov').value;
   const year = document.getElementById('filtro-ano-mov').value;
   const month = document.getElementById('filtro-mes-mov').value;
   const productId = document.getElementById('filtro-produto-mov').value;
   const userId = document.getElementById('filtro-pessoa-mov').value;
 
   const params = new URLSearchParams({ token });
+  if (type) params.append('type', type);
   if (year) params.append('year', year);
   if (month) params.append('month', month);
   if (productId) params.append('productId', productId);

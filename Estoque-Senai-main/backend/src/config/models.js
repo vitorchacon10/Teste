@@ -43,7 +43,12 @@ export const Product = sequelize.define('Product', {
   barcode: { type: DataTypes.STRING, unique: true },
   photoUrl: DataTypes.STRING,
   category: DataTypes.STRING,
-  location: DataTypes.STRING
+  location: DataTypes.STRING,
+  // Dados da compra (nota fiscal), preenchidos no cadastro do produto
+  invoiceNumber: DataTypes.STRING,   // Número da nota fiscal
+  purchaseLocation: DataTypes.STRING, // Local onde o produto foi comprado
+  cnpj: DataTypes.STRING,            // CNPJ do fornecedor
+  purchaseDate: DataTypes.DATEONLY   // Data da compra
 }, { tableName: 'products' });
 
 export const Movement = sequelize.define('Movement', {
