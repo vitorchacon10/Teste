@@ -6,7 +6,7 @@ import { upload } from '../middlewares/upload.js';
 import { createProduct, dashboard, deleteProduct, getProductByBarcode, listProducts, moveStock, updateProduct } from '../controllers/productController.js';
 import { createDelivery } from '../controllers/deliveryController.js';
 import { approveSolicitacao, createSolicitacao, listSolicitacoes, rejectSolicitacao } from '../controllers/solicitacaoController.js';
-import { deliveries, exportProductsExcel, exportProductsPdf, movements, reportCritical } from '../controllers/reportController.js';
+import { deliveries, exportMovementsExcel, exportMovementsPdf, exportProductsExcel, exportProductsPdf, listPeopleForFilter, movements, reportCritical } from '../controllers/reportController.js';
 
 const routes = Router();
 
@@ -53,5 +53,12 @@ routes.get('/reports/pdf', auth, exportProductsPdf);
 routes.get('/reports/critical', auth, reportCritical);
 routes.get('/reports/movements', auth, movements);
 routes.get('/reports/deliveries', auth, deliveries);
+// Relatório mensal de movimentações (entrada/saída) com filtro por
+// produto e pessoa: acessível a quem vê a tela de Relatórios
+// (Coordenador e Diretor). Não usa allowRoles('DIRETOR') porque
+// Coordenador também precisa gerar esse relatório.
+routes.get('/reports/people', auth, allowRoles('COORDENADOR', 'DIRETOR'), listPeopleForFilter);
+routes.get('/reports/movements/excel', auth, allowRoles('COORDENADOR', 'DIRETOR'), exportMovementsExcel);
+routes.get('/reports/movements/pdf', auth, allowRoles('COORDENADOR', 'DIRETOR'), exportMovementsPdf);
 
 export default routes;

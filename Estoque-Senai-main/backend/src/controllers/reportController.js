@@ -2,7 +2,7 @@ import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import dayjs from 'dayjs';
 import { Op } from 'sequelize';
-import { Product, Movement, Delivery } from '../config/models.js';
+import { Product, Movement, Delivery, User } from '../config/models.js';
 
 // Formata número como moeda brasileira, sem depender de libs extras
 function formatarMoeda(valor) {
@@ -487,21 +487,181 @@ export async function reportCritical(req,res){
 }
 
 
+// Monta o filtro comum (mês/ano, produto, pessoa, tipo) usado no
+// endpoint JSON e nas duas exportações (Excel/PDF) de movimentações.
+// Regra: sem ano = todos os períodos; só ano = ano inteiro; ano+mês = só o mês.
+function buildMovementsWhere(query) {
+  const { month, year, productId, userId, type } = query;
 
+  const where = {};
+
+  if (year) {
+    const refYear = Number(year);
+
+    if (month) {
+      const refMonth = Number(month);
+      const inicio = dayjs(`${refYear}-${String(refMonth).padStart(2, '0')}-01`).startOf('month').toDate();
+      const fim = dayjs(inicio).endOf('month').toDate();
+      where.createdAt = { [Op.between]: [inicio, fim] };
+    } else {
+      const inicio = dayjs(`${refYear}-01-01`).startOf('year').toDate();
+      const fim = dayjs(inicio).endOf('year').toDate();
+      where.createdAt = { [Op.between]: [inicio, fim] };
+    }
+  }
+  // se não vier "year", não filtra por data — traz tudo
+
+  if (productId) where.ProductId = productId;
+  if (userId) where.UserId = userId;
+
+  // Por padrão traz ENTRADA e SAIDA (não AJUSTE), a menos que um tipo específico seja pedido
+  where.type = type ? type : { [Op.in]: ['ENTRADA', 'SAIDA'] };
+
+  return where;
+}
 
 
 export async function movements(req,res){
 
- const data =
- await Movement.findAll({
-   include:[Product],
-   order:[
-     ['createdAt','DESC']
-   ]
- });
+  const where = buildMovementsWhere(req.query);
 
- res.json(data);
+  const data = await Movement.findAll({
+    where,
+    include: [
+      Product,
+      { model: User, attributes: ['id', 'name', 'role'] } // nunca inclui a senha
+    ],
+    order: [['createdAt', 'DESC']]
+  });
 
+  res.json(data);
+
+}
+
+
+export async function exportMovementsExcel(req, res) {
+  const where = buildMovementsWhere(req.query);
+
+  const movimentos = await Movement.findAll({
+    where,
+    include: [
+      Product,
+      { model: User, attributes: ['id', 'name', 'role'] }
+    ],
+    order: [['createdAt', 'DESC']]
+  });
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "SENAI Zerbini";
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet('Movimentações', {
+    properties: { tabColor: { argb: 'E30613' } }
+  });
+
+  sheet.mergeCells('A1:G1');
+  const title = sheet.getCell('A1');
+  title.value = "RELATÓRIO DE MOVIMENTAÇÕES - SENAI ZERBINI";
+  title.font = { bold: true, size: 16, color: { argb: 'FFFFFF' } };
+  title.alignment = { horizontal: 'center' };
+  title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E30613' } };
+
+  sheet.addRow([]);
+
+  const header = sheet.addRow(['Data', 'Tipo', 'Produto', 'Quantidade', 'Responsável', 'Usuário', 'Setor']);
+  header.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '333333' } };
+    cell.alignment = { horizontal: 'center' };
+  });
+
+  movimentos.forEach((m, index) => {
+    const row = sheet.addRow([
+      dayjs(m.createdAt).format('DD/MM/YYYY HH:mm'),
+      m.type,
+      m.Product ? m.Product.name : '-',
+      m.quantity,
+      m.responsible || '-',
+      m.User ? m.User.name : '-',
+      m.sector || '-'
+    ]);
+
+    if (index % 2 === 0) {
+      row.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F2F2F2' } };
+      });
+    }
+  });
+
+  sheet.columns.forEach(column => { column.width = 20; });
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=movimentacoes-senai.xlsx');
+
+  await workbook.xlsx.write(res);
+  res.end();
+}
+
+
+export async function exportMovementsPdf(req, res) {
+  const where = buildMovementsWhere(req.query);
+
+  const movimentos = await Movement.findAll({
+    where,
+    include: [
+      Product,
+      { model: User, attributes: ['id', 'name', 'role'] }
+    ],
+    order: [['createdAt', 'DESC']]
+  });
+
+  const doc = new PDFDocument({ margin: 40 });
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename=movimentacoes-senai.pdf');
+
+  doc.pipe(res);
+
+  doc.rect(0, 0, 600, 70).fill('#E30613');
+  doc.fillColor('#FFFFFF').fontSize(20).text('RELATÓRIO DE MOVIMENTAÇÕES', 40, 25, { align: 'center' });
+  doc.moveDown(3);
+
+  doc.fillColor('#333333').fontSize(12).text('SENAI Zerbini');
+  doc.text(`Data de emissão: ${dayjs().format('DD/MM/YYYY')}`);
+  doc.moveDown();
+
+  movimentos.forEach((m, index) => {
+    const y = doc.y;
+
+    if (index % 2 === 0) {
+      doc.rect(40, y - 5, 520, 47).fill('#F3F3F3');
+    }
+
+    doc.fillColor('#000').fontSize(10)
+      .text(`${m.type} — ${dayjs(m.createdAt).format('DD/MM/YYYY HH:mm')}`)
+      .text(`Produto: ${m.Product ? m.Product.name : '-'}   Quantidade: ${m.quantity}`)
+      .text(`Responsável: ${m.responsible || '-'}   Usuário: ${m.User ? m.User.name : '-'}   Setor: ${m.sector || '-'}`);
+
+    doc.moveDown();
+  });
+
+  doc.moveDown();
+  doc.fontSize(9).fillColor('#777').text('Sistema de Controle de Estoque - SENAI Zerbini', { align: 'center' });
+
+  doc.end();
+}
+
+
+// Lista enxuta de pessoas (id + nome) só para preencher o dropdown
+// de filtro do relatório de movimentações. Não usa /users porque
+// esse endpoint é exclusivo de Diretor (gerenciamento de cargos).
+export async function listPeopleForFilter(req, res) {
+  const people = await User.findAll({
+    attributes: ['id', 'name'],
+    order: [['name', 'ASC']]
+  });
+
+  res.json(people);
 }
 
 
