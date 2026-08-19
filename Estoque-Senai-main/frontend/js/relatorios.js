@@ -96,6 +96,19 @@ async function carregarRelatorios() {
         </div>
 
         <div class="campo">
+          <label>Unidade de Medida</label>
+          <select id="filtro-unidade-mov">
+            <option value="">Todas</option>
+            <option value="UN">Unidade</option>
+            <option value="PCT">Pacote</option>
+            <option value="G">Grama (g)</option>
+            <option value="KG">Quilograma (kg)</option>
+            <option value="ML">Mililitro (mL)</option>
+            <option value="L">Litro (L)</option>
+          </select>
+        </div>
+
+        <div class="campo">
           <label>Pessoa</label>
           <select id="filtro-pessoa-mov">
             <option value="">Todas</option>
@@ -176,6 +189,7 @@ function baixarRelatorioMovimentacoes(tipo) {
   const year = document.getElementById('filtro-ano-mov').value;
   const month = document.getElementById('filtro-mes-mov').value;
   const productId = document.getElementById('filtro-produto-mov').value;
+  const unit = document.getElementById('filtro-unidade-mov').value;
   const userId = document.getElementById('filtro-pessoa-mov').value;
 
   const params = new URLSearchParams({ token });
@@ -183,6 +197,7 @@ function baixarRelatorioMovimentacoes(tipo) {
   if (year) params.append('year', year);
   if (month) params.append('month', month);
   if (productId) params.append('productId', productId);
+  if (unit) params.append('unit', unit);
   if (userId) params.append('userId', userId);
 
   const url = window.API_ORIGIN + '/api/reports/movements/' + tipo + '?' + params.toString();

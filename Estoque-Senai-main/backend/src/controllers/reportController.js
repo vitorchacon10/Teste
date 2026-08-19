@@ -520,17 +520,32 @@ function buildMovementsWhere(query) {
   return where;
 }
 
+// A unidade de medida (unit) mora no Product, não no Movement — então esse
+// filtro precisa ir dentro do "include" do Product, não no where principal.
+// required:true garante que só traz movimentações cujo produto bate com
+// a unidade escolhida (inner join em vez de left join).
+function buildMovementsInclude(query) {
+  const { unit } = query;
+
+  const productInclude = unit
+    ? { model: Product, where: { unit }, required: true }
+    : Product;
+
+  return [
+    productInclude,
+    { model: User, attributes: ['id', 'name', 'role'] } // nunca inclui a senha
+  ];
+}
+
 
 export async function movements(req,res){
 
   const where = buildMovementsWhere(req.query);
+  const include = buildMovementsInclude(req.query);
 
   const data = await Movement.findAll({
     where,
-    include: [
-      Product,
-      { model: User, attributes: ['id', 'name', 'role'] } // nunca inclui a senha
-    ],
+    include,
     order: [['createdAt', 'DESC']]
   });
 
@@ -541,13 +556,11 @@ export async function movements(req,res){
 
 export async function exportMovementsExcel(req, res) {
   const where = buildMovementsWhere(req.query);
+  const include = buildMovementsInclude(req.query);
 
   const movimentos = await Movement.findAll({
     where,
-    include: [
-      Product,
-      { model: User, attributes: ['id', 'name', 'role'] }
-    ],
+    include,
     order: [['createdAt', 'DESC']]
   });
 
@@ -627,13 +640,11 @@ export async function exportMovementsExcel(req, res) {
 
 export async function exportMovementsPdf(req, res) {
   const where = buildMovementsWhere(req.query);
+  const include = buildMovementsInclude(req.query);
 
   const movimentos = await Movement.findAll({
     where,
-    include: [
-      Product,
-      { model: User, attributes: ['id', 'name', 'role'] }
-    ],
+    include,
     order: [['createdAt', 'DESC']]
   });
 
