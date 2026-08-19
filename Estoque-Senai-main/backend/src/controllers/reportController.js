@@ -559,7 +559,7 @@ export async function exportMovementsExcel(req, res) {
     properties: { tabColor: { argb: 'E30613' } }
   });
 
-  sheet.mergeCells('A1:G1');
+  sheet.mergeCells('A1:J1');
   const title = sheet.getCell('A1');
   title.value = "RELATÓRIO DE MOVIMENTAÇÕES - SENAI ZERBINI";
   title.font = { bold: true, size: 16, color: { argb: 'FFFFFF' } };
@@ -568,23 +568,36 @@ export async function exportMovementsExcel(req, res) {
 
   sheet.addRow([]);
 
-  const header = sheet.addRow(['Data', 'Tipo', 'Produto', 'Quantidade', 'Responsável', 'Usuário', 'Setor']);
+  const header = sheet.addRow(['Data', 'Tipo', 'Produto', 'Quantidade', 'Unidade de Medida', 'Preço Unitário', 'Valor Total', 'Responsável', 'Usuário', 'Setor']);
   header.eachCell(cell => {
     cell.font = { bold: true, color: { argb: 'FFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '333333' } };
     cell.alignment = { horizontal: 'center' };
   });
 
+  let valorTotalMovimentado = 0;
+
   movimentos.forEach((m, index) => {
+    const precoUnitario = m.Product ? Number(m.Product.price) || 0 : 0;
+    const valorTotalMovimento = precoUnitario * (m.quantity || 0);
+    valorTotalMovimentado += valorTotalMovimento;
+
     const row = sheet.addRow([
       dayjs(m.createdAt).format('DD/MM/YYYY HH:mm'),
       m.type,
       m.Product ? m.Product.name : '-',
       m.quantity,
+      m.Product ? formatarUnidade(m.Product.unit) : '-',
+      precoUnitario,
+      valorTotalMovimento,
       m.responsible || '-',
       m.User ? m.User.name : '-',
       m.sector || '-'
     ]);
+
+    // formata as colunas de preço como moeda
+    row.getCell(6).numFmt = 'R$ #,##0.00';
+    row.getCell(7).numFmt = 'R$ #,##0.00';
 
     if (index % 2 === 0) {
       row.eachCell(cell => {
@@ -592,6 +605,15 @@ export async function exportMovementsExcel(req, res) {
       });
     }
   });
+
+  // Linha de total geral movimentado
+  sheet.addRow([]);
+  const rowTotal = sheet.addRow(['', '', '', '', '', '', valorTotalMovimentado, '', '', '']);
+  rowTotal.getCell(6).value = 'VALOR TOTAL MOVIMENTADO:';
+  rowTotal.getCell(6).font = { bold: true };
+  rowTotal.getCell(6).alignment = { horizontal: 'right' };
+  rowTotal.getCell(7).numFmt = 'R$ #,##0.00';
+  rowTotal.getCell(7).font = { bold: true, color: { argb: 'E30613' } };
 
   sheet.columns.forEach(column => { column.width = 20; });
 
@@ -630,20 +652,33 @@ export async function exportMovementsPdf(req, res) {
   doc.text(`Data de emissão: ${dayjs().format('DD/MM/YYYY')}`);
   doc.moveDown();
 
+  let valorTotalMovimentado = 0;
+
   movimentos.forEach((m, index) => {
+    const precoUnitario = m.Product ? Number(m.Product.price) || 0 : 0;
+    const valorTotalMovimento = precoUnitario * (m.quantity || 0);
+    valorTotalMovimentado += valorTotalMovimento;
+
     const y = doc.y;
 
     if (index % 2 === 0) {
-      doc.rect(40, y - 5, 520, 47).fill('#F3F3F3');
+      doc.rect(40, y - 5, 520, 60).fill('#F3F3F3');
     }
 
     doc.fillColor('#000').fontSize(10)
       .text(`${m.type} — ${dayjs(m.createdAt).format('DD/MM/YYYY HH:mm')}`)
-      .text(`Produto: ${m.Product ? m.Product.name : '-'}   Quantidade: ${m.quantity}`)
+      .text(`Produto: ${m.Product ? m.Product.name : '-'}   Quantidade: ${m.quantity}   Unidade de Medida: ${m.Product ? formatarUnidade(m.Product.unit) : '-'}`)
+      .text(`Preço Unitário: ${formatarMoeda(precoUnitario)}   Valor Total: ${formatarMoeda(valorTotalMovimento)}`)
       .text(`Responsável: ${m.responsible || '-'}   Usuário: ${m.User ? m.User.name : '-'}   Setor: ${m.sector || '-'}`);
 
     doc.moveDown();
   });
+
+  doc.moveDown();
+  doc
+    .fontSize(12)
+    .fillColor('#E30613')
+    .text(`VALOR TOTAL MOVIMENTADO: ${formatarMoeda(valorTotalMovimentado)}`, { align: 'right' });
 
   doc.moveDown();
   doc.fontSize(9).fillColor('#777').text('Sistema de Controle de Estoque - SENAI Zerbini', { align: 'center' });
