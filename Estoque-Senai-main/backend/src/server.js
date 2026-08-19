@@ -90,8 +90,16 @@ async function seedAdmin() {
   }
 }
 
+async function migrateUnitColumn() {
+  await sequelize.query(`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS unit VARCHAR(10) NOT NULL DEFAULT 'UN';
+  `);
+  console.log('Coluna unit verificada/criada com sucesso');
+}
+
 const PORT = process.env.PORT || 3333;
 sequelize.sync()
+  .then(migrateUnitColumn)
   .then(seedAdmin)
   .then(() => server.listen(PORT, () => console.log(`API rodando em http://localhost:${PORT}`)))
   .catch(error => {
