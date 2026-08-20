@@ -120,20 +120,19 @@ document.getElementById('produto-unidade').addEventListener('change', ajustarSte
 // ---- CALCULADORA DE PACOTE ----
 // Preenche Quantidade / Unidade / Preço Unitário automaticamente a partir
 // de "comprei X [unidade do pacote] por R$ Y no total".
+// A caixa fica sempre visível; só recalcula quando todos os campos
+// necessários estiverem preenchidos com valores válidos.
 function recalcularPorPacote() {
-  const ativo = document.getElementById('produto-calc-ativo').checked;
-  const caixa = document.getElementById('produto-calc-caixa');
-  caixa.style.display = ativo ? 'block' : 'none';
-  if (!ativo) return;
-
-  const qtdPacote = Number(document.getElementById('produto-calc-qtd').value);
+  const numPacotes = Number(document.getElementById('produto-calc-num-pacotes').value) || 1;
+  const qtdPorPacote = Number(document.getElementById('produto-calc-qtd').value);
   const unidadePacote = document.getElementById('produto-calc-unidade').value;
   const valorTotal = Number(document.getElementById('produto-calc-valor').value);
 
-  if (!qtdPacote || qtdPacote <= 0 || !valorTotal || valorTotal <= 0) return;
+  if (!numPacotes || numPacotes <= 0 || !qtdPorPacote || qtdPorPacote <= 0 || !valorTotal || valorTotal <= 0) return;
 
   const conv = CONVERSAO_PACOTE[unidadePacote];
-  const quantidadeFinal = qtdPacote * conv.fator;
+  // Ex: 20 pacotes de 5 kg cada = 100 kg = 100000 g no total
+  const quantidadeFinal = numPacotes * qtdPorPacote * conv.fator;
   const precoFinal = valorTotal / quantidadeFinal;
 
   document.getElementById('produto-quantidade').value = quantidadeFinal;
@@ -142,7 +141,7 @@ function recalcularPorPacote() {
   ajustarStepQuantidade();
 }
 
-['produto-calc-ativo', 'produto-calc-qtd', 'produto-calc-unidade', 'produto-calc-valor'].forEach(function (id) {
+['produto-calc-num-pacotes', 'produto-calc-qtd', 'produto-calc-unidade', 'produto-calc-valor'].forEach(function (id) {
   document.getElementById(id).addEventListener('input', recalcularPorPacote);
   document.getElementById(id).addEventListener('change', recalcularPorPacote);
 });
@@ -185,10 +184,9 @@ function abrirModalEdicao(id) {
   document.getElementById('produto-cnpj').value = produto.cnpj || '';
   document.getElementById('produto-data-compra').value = produto.purchaseDate || '';
 
-  // Ao editar um produto já existente, a calculadora de pacote começa
-  // desligada — os valores já estão certos, não precisa recalcular.
-  document.getElementById('produto-calc-ativo').checked = false;
-  document.getElementById('produto-calc-caixa').style.display = 'none';
+  // Ao editar um produto já existente, limpa os campos da calculadora
+  // (os valores já estão certos, não precisa recalcular).
+  document.getElementById('produto-calc-num-pacotes').value = '';
   document.getElementById('produto-calc-qtd').value = '';
   document.getElementById('produto-calc-valor').value = '';
   document.getElementById('produto-calc-unidade').value = 'KG';
@@ -211,8 +209,7 @@ function limparFormularioProduto() {
   document.getElementById('produto-unidade').value = 'UN';
   document.getElementById('produto-foto').value = '';
 
-  document.getElementById('produto-calc-ativo').checked = false;
-  document.getElementById('produto-calc-caixa').style.display = 'none';
+  document.getElementById('produto-calc-num-pacotes').value = '';
   document.getElementById('produto-calc-qtd').value = '';
   document.getElementById('produto-calc-valor').value = '';
   document.getElementById('produto-calc-unidade').value = 'KG';

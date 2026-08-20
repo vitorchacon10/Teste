@@ -315,14 +315,17 @@
         <input type="hidden" id="produto-id" />
 
         <div class="campo" style="margin-bottom: 12px; padding: 12px; background: #f5f5f5; border-radius: 6px;">
-          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:600;">
-            <input type="checkbox" id="produto-calc-ativo" />
-            Comprei um pacote (calcular quantidade e preço automaticamente)
+          <label style="display:block; font-weight:600; margin-bottom: 8px;">
+            Calculadora de pacote (preenche Quantidade, Unidade e Preço automaticamente)
           </label>
-          <div id="produto-calc-caixa" style="display:none; margin-top: 10px;">
+          <div id="produto-calc-caixa" style="margin-top: 10px;">
             <div class="grade-2-colunas">
               <div class="campo">
-                <label for="produto-calc-qtd">Quantidade do pacote</label>
+                <label for="produto-calc-num-pacotes">Quantidade de pacotes</label>
+                <input type="number" id="produto-calc-num-pacotes" min="0" step="1" placeholder="Ex: 20" />
+              </div>
+              <div class="campo">
+                <label for="produto-calc-qtd">Quantidade por pacote</label>
                 <input type="number" id="produto-calc-qtd" min="0" step="0.01" placeholder="Ex: 5" />
               </div>
               <div class="campo">
@@ -336,13 +339,13 @@
                   <option value="PCT">Pacote</option>
                 </select>
               </div>
-              <div class="campo" style="grid-column: span 2;">
+              <div class="campo">
                 <label for="produto-calc-valor">Valor total pago (R$)</label>
-                <input type="number" id="produto-calc-valor" min="0" step="0.01" placeholder="Ex: 50,00" />
+                <input type="number" id="produto-calc-valor" min="0" step="0.01" placeholder="Ex: 1000,00" />
               </div>
             </div>
             <p style="font-size: 13px; color: #666; margin-top: 6px;">
-              Isso preenche a Quantidade, Unidade e Preço Unitário abaixo, já convertidos para a menor unidade (g ou mL) — assim as retiradas fracionadas saem com o preço certo.
+              Ex: 20 pacotes de 5 kg cada, pagando R$ 1.000,00 no total. Isso preenche a Quantidade, Unidade e Preço Unitário abaixo, já convertidos para a menor unidade (g ou mL) — assim as retiradas fracionadas saem com o preço certo.
             </p>
           </div>
         </div>
