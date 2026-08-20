@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SENAI Zerbini – Controle de Estoque</title>
+  <link rel="icon" type="image/x-icon" href="favicon/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32.png" />
+  <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .linha-item-solicitacao {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .linha-item-solicitacao .item-produto {
+      flex: 2;
+    }
+    .linha-item-solicitacao .item-quantidade {
+      flex: 1;
+      min-width: 70px;
+    }
+    .linha-item-solicitacao .item-unidade {
+      min-width: 28px;
+      font-size: 0.85em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TELA DE LOGIN -->
+  <div id="pagina-login" class="pagina-login">
+    <div class="card-login">
+      <div class="logo-senai">SENAI Zerbini</div>
+      <h2>Controle de Estoque</h2>
+
+      <div id="erro-login" class="mensagem-erro" style="display:none"></div>
+
+      <div class="campo">
+        <label for="login-email">E-mail</label>
+        <input type="email" id="login-email" autocomplete="username" />
+      </div>
+      <div class="campo">
+        <label for="login-senha">Senha</label>
+        <input type="password" id="login-senha" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-vermelho btn-full" id="btn-entrar">Entrar</button>
+
+      <p style="text-align:center; margin-top: 10px; font-size: 0.85rem;">
+        <a href="esqueci-senha.html">Esqueci minha senha</a>
+      </p>
+
+      <p style="text-align:center; margin-top: 6px; font-size: 0.85rem;">
+        Não tem conta? <a href="cadastro.html">Criar conta</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- APP PRINCIPAL (aparece após login) -->
+  <div id="app" style="display:none">
+
+    <!-- CABEÇALHO -->
+    <header class="cabecalho">
+      <div class="cabecalho-titulo">SENAI ZERBINI | ESTOQUE</div>
+      <button class="btn-hamburguer" id="btn-menu-mobile" aria-label="Abrir menu">&#9776;</button>
+      <nav class="menu">
+        <a href="#" class="menu-link ativo" data-pagina="dashboard" id="link-dashboard">Dashboard</a>
+        <a href="#" class="menu-link" data-pagina="produtos">Produtos</a>
+        <a href="#" class="menu-link" data-pagina="scanner" id="link-scanner">Scanner</a>
+        <a href="#" class="menu-link" data-pagina="entregas" id="link-entregas">Retirada</a>
+        <a href="#" class="menu-link" data-pagina="solicitacoes">
+          Solicitações
+          <span id="badge-solicitacoes" style="display:none; background:#e0a800; color:#fff; border-radius:10px; font-size:0.7rem; padding:1px 6px; margin-left:4px;">0</span>
+        </a>
+        <a href="#" class="menu-link" data-pagina="relatorios" id="link-relatorios">Relatórios</a>
+        <a href="#" class="menu-link" data-pagina="usuarios" id="link-usuarios" style="display:none">Usuários</a>
+        <button class="btn btn-branco btn-pequeno" id="btn-ativar-notificacoes" style="display:none">🔔 Ativar notificações</button>
+        <button class="btn btn-branco btn-pequeno" id="btn-sair">Sair</button>
+      </nav>
+    </header>
+
+    <!-- PÁGINAS -->
+    <main class="conteudo">
+
+      <!-- DASHBOARD -->
+      <section id="pagina-dashboard" class="pagina ativa">
+        <h1>Dashboard Principal</h1>
+
+        <div class="grade-cards" id="cards-dashboard">
+          <!-- preenchido pelo JS -->
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <h2>Indicadores do estoque</h2>
+          <canvas id="grafico-barras" height="180"></canvas>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <h2>Últimas movimentações</h2>
+          <div id="lista-movimentacoes"></div>
+        </div>
+      </section>
+
+      <!-- PRODUTOS -->
+      <section id="pagina-produtos" class="pagina">
+        <div class="linha-topo">
+          <h1>Produtos em Estoque</h1>
+          <button class="btn btn-vermelho" id="btn-novo-produto">+ Novo Produto</button>
+        </div>
+
+        <div class="card">
+          <div class="linha-busca">
+            <input type="text" id="busca-produto" placeholder="Buscar produto..." class="campo-busca" />
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="tabela" id="tabela-produtos">
+              <thead>
+                <tr>
+                  <th>Foto</th>
+                  <th>Produto</th>
+                  <th>Marca</th>
+                  <th>Qtd</th>
+                  <th>Unidade</th>
+                  <th>Preço</th>
+                  <th>Validade</th>
+                  <th>Código</th>
+                  <th>Categoria</th>
+                  <th>Local</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-tabela-produtos">
+                <!-- preenchido pelo JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCANNER -->
+      <section id="pagina-scanner" class="pagina">
+        <h1>Leitor de Código de Barras</h1>
+        <div class="card scanner-area">
+          <div id="leitor-camera"></div>
+
+          <div class="campo" style="margin-top: 12px;">
+            <label for="campo-codigo">Código de barras</label>
+            <input type="text" id="campo-codigo" placeholder="Digite ou escaneie o código" />
+          </div>
+          <button class="btn btn-contorno" id="btn-buscar-manual">Buscar manualmente</button>
+
+          <div id="msg-scanner" class="mensagem"></div>
+
+          <button class="btn btn-vermelho" id="btn-cadastrar-do-scanner" style="display:none; margin-top:12px;">
+            Cadastrar novo produto
+          </button>
+
+          <div id="resultado-produto" style="display:none" class="card" style="margin-top:12px;">
+            <h2 id="nome-produto-scan"></h2>
+            <p>Quantidade atual: <strong id="qtd-produto-scan"></strong></p>
+            <div class="campo">
+              <label for="qtd-movimentacao">Quantidade</label>
+              <input type="number" id="qtd-movimentacao" value="1" min="1" />
+            </div>
+            <div class="linha-botoes">
+              <button class="btn btn-vermelho" id="btn-entrada">Entrada</button>
+              <button class="btn btn-contorno" id="btn-saida">Saída</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ENTREGAS -->
+      <section id="pagina-entregas" class="pagina">
+        <h1>Controle de Retirada</h1>
+        <div class="card" style="max-width: 520px;">
+          <div class="campo">
+            <label for="entrega-produto">Produto retirado</label>
+            <select id="entrega-produto">
+              <option value="">Selecione um produto...</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="entrega-responsavel">Nome do responsável</label>
+            <input type="text" id="entrega-responsavel" />
+          </div>
+          <div class="campo">
+            <label for="entrega-setor">Setor</label>
+            <input type="text" id="entrega-setor" />
+          </div>
+          <div class="campo">
+            <label for="entrega-qtd">Quantidade</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="entrega-qtd" value="1" min="0" step="1" style="flex:1;" />
+              <span id="entrega-unidade" style="font-size:0.85em; color:#888;"></span>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="entrega-assinatura">Assinatura digital (URL opcional)</label>
+            <input type="text" id="entrega-assinatura" />
+          </div>
+          <button class="btn btn-vermelho" id="btn-registrar-entrega">Registrar Retirada</button>
+          <div id="msg-entrega" class="mensagem"></div>
+        </div>
+      </section>
+
+      <!-- SOLICITAÇÕES DE RETIRADA -->
+      <section id="pagina-solicitacoes" class="pagina">
+        <h1>Solicitações de Retirada</h1>
+
+        <div class="card" style="max-width: 520px;">
+          <h2>Nova solicitação</h2>
+
+          <label style="display:block; margin-bottom:6px;">Produtos</label>
+          <div id="sol-itens-container">
+            <!-- linhas de "produto + quantidade" geradas pelo JS -->
+          </div>
+          <button type="button" id="btn-adicionar-item-solicitacao" class="btn btn-cinza btn-pequeno" style="margin-bottom: 14px;">
+            + Adicionar produto
+          </button>
+
+          <div class="campo">
+            <label for="sol-solicitante">Solicitante</label>
+            <input type="text" id="sol-solicitante" placeholder="Nome de quem está pedindo" />
+          </div>
+          <div class="campo">
+            <label for="sol-responsavel-retirada">Responsável pela retirada</label>
+            <input type="text" id="sol-responsavel-retirada" placeholder="Nome de quem vai retirar o material" />
+          </div>
+          <div class="campo">
+            <label for="sol-setor">Setor</label>
+            <input type="text" id="sol-setor" />
+          </div>
+          <div class="campo">
+            <label for="sol-observacoes">Observações (opcional)</label>
+            <input type="text" id="sol-observacoes" />
+          </div>
+          <button class="btn btn-vermelho" id="btn-criar-solicitacao">Enviar solicitação</button>
+          <div id="msg-solicitacao" class="mensagem"></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <h2 id="titulo-lista-solicitacoes">Minhas solicitações</h2>
+          <div style="overflow-x: auto;">
+            <table class="tabela" id="tabela-solicitacoes">
+              <thead>
+                <tr>
+                  <th>Produto(s)</th>
+                  <th>Setor</th>
+                  <th>Solicitante</th>
+                  <th>Responsável pela Retirada</th>
+                  <th>Status</th>
+                  <th>Data</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-tabela-solicitacoes">
+                <!-- preenchido pelo JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- RELATÓRIOS -->
+      <section id="pagina-relatorios" class="pagina">
+        <h1>Relatórios</h1>
+        <div class="card linha-botoes">
+          <button class="btn btn-vermelho" id="btn-excel">Exportar Excel</button>
+          <button class="btn btn-contorno" id="btn-pdf">Exportar PDF</button>
+        </div>
+
+        <div class="grade-cards" id="grade-relatorios" style="margin-top: 20px;">
+          <!-- preenchido pelo JS -->
+        </div>
+      </section>
+
+      <!-- USUÁRIOS (somente Diretor) -->
+      <section id="pagina-usuarios" class="pagina">
+        <h1>Gestão de Usuários</h1>
+        <div class="card">
+          <div style="overflow-x: auto;">
+            <table class="tabela" id="tabela-usuarios">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>E-mail</th>
+                  <th>Cargo atual</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-tabela-usuarios">
+                <!-- preenchido pelo JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL PRODUTO -->
+  <div id="modal-produto" class="modal-fundo" style="display:none">
+    <div class="modal-caixa">
+      <div class="modal-cabecalho">
+        <h2 id="modal-produto-titulo">Cadastrar produto</h2>
+        <button class="btn-fechar" id="btn-fechar-modal">&times;</button>
+      </div>
+      <div class="modal-corpo">
+        <input type="hidden" id="produto-id" />
+
+        <div class="campo" style="margin-bottom: 12px; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:600;">
+            <input type="checkbox" id="produto-calc-ativo" />
+            Comprei um pacote (calcular quantidade e preço automaticamente)
+          </label>
+          <div id="produto-calc-caixa" style="display:none; margin-top: 10px;">
+            <div class="grade-2-colunas">
+              <div class="campo">
+                <label for="produto-calc-qtd">Quantidade do pacote</label>
+                <input type="number" id="produto-calc-qtd" min="0" step="0.01" placeholder="Ex: 5" />
+              </div>
+              <div class="campo">
+                <label for="produto-calc-unidade">Unidade do pacote</label>
+                <select id="produto-calc-unidade">
+                  <option value="KG">Quilograma (kg)</option>
+                  <option value="L">Litro (L)</option>
+                  <option value="G">Grama (g)</option>
+                  <option value="ML">Mililitro (mL)</option>
+                  <option value="UN">Unidade</option>
+                  <option value="PCT">Pacote</option>
+                </select>
+              </div>
+              <div class="campo" style="grid-column: span 2;">
+                <label for="produto-calc-valor">Valor total pago (R$)</label>
+                <input type="number" id="produto-calc-valor" min="0" step="0.01" placeholder="Ex: 50,00" />
+              </div>
+            </div>
+            <p style="font-size: 13px; color: #666; margin-top: 6px;">
+              Isso preenche a Quantidade, Unidade e Preço Unitário abaixo, já convertidos para a menor unidade (g ou mL) — assim as retiradas fracionadas saem com o preço certo.
+            </p>
+          </div>
+        </div>
+
+        <div class="grade-2-colunas">
+          <div class="campo">
+            <label for="produto-nome">Nome *</label>
+            <input type="text" id="produto-nome" />
+          </div>
+          <div class="campo">
+            <label for="produto-marca">Marca</label>
+            <input type="text" id="produto-marca" />
+          </div>
+          <div class="campo">
+            <label for="produto-quantidade">Quantidade</label>
+            <input type="number" id="produto-quantidade" min="0" step="1" />
+          </div>
+          <div class="campo">
+            <label for="produto-unidade">Unidade de medida</label>
+            <select id="produto-unidade">
+              <option value="UN">Unidade</option>
+              <option value="PCT">Pacote</option>
+              <option value="G">Grama (g)</option>
+              <option value="KG">Quilograma (kg)</option>
+              <option value="ML">Mililitro (mL)</option>
+              <option value="L">Litro (L)</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="produto-preco">Preço Unitário (R$)</label>
+            <input type="number" id="produto-preco" min="0" step="0.01" placeholder="0,00" />
+          </div>
+          <div class="campo">
+            <label for="produto-qtd-min">Qtd. Mínima</label>
+            <input type="number" id="produto-qtd-min" min="0" />
+          </div>
+          <div class="campo">
+            <label for="produto-validade">Data de Validade</label>
+            <input type="date" id="produto-validade" />
+          </div>
+          <div class="campo">
+            <label for="produto-codigo">Código de Barras</label>
+            <input type="text" id="produto-codigo" />
+          </div>
+          <div class="campo">
+            <label for="produto-categoria">Categoria</label>
+            <input type="text" id="produto-categoria" />
+          </div>
+          <div class="campo">
+            <label for="produto-local">Localização</label>
+            <input type="text" id="produto-local" />
+          </div>
+          <div class="campo">
+            <label for="produto-nota-fiscal">Número da Nota Fiscal</label>
+            <input type="text" id="produto-nota-fiscal" />
+          </div>
+          <div class="campo">
+            <label for="produto-local-compra">Local da Compra</label>
+            <input type="text" id="produto-local-compra" />
+          </div>
+          <div class="campo">
+            <label for="produto-cnpj">CNPJ do Fornecedor</label>
+            <input type="text" id="produto-cnpj" placeholder="00.000.000/0000-00" />
+          </div>
+          <div class="campo">
+            <label for="produto-data-compra">Data da Compra</label>
+            <input type="date" id="produto-data-compra" />
+          </div>
+        </div>
+        <div class="campo" style="margin-top: 8px;">
+          <label for="produto-foto">Foto do produto</label>
+          <input type="file" id="produto-foto" accept="image/*" />
+        </div>
+      </div>
+      <div class="modal-rodape">
+        <button class="btn btn-cinza" id="btn-cancelar-produto">Cancelar</button>
+        <button class="btn btn-vermelho" id="btn-salvar-produto">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de notificação -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/produtos.js"></script>
+  <script src="js/scanner.js"></script>
+  <script src="js/entregas.js"></script>
+  <script src="js/solicitacoes.js"></script>
+  <script src="js/relatorios.js"></script>
+  <script src="js/usuarios.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/menu-mobile.js"></script>
+</body>
+</html>
