@@ -45,8 +45,12 @@ async function buscarProdutoPorCodigo(codigo) {
   try {
     produtoScan = await api.get('/products/barcode/' + codigo);
 
+    const unidadeFormatada = formatarUnidadeProduto(produtoScan.unit);
+
     document.getElementById('nome-produto-scan').textContent = produtoScan.name;
     document.getElementById('qtd-produto-scan').textContent = produtoScan.quantity;
+    document.getElementById('unidade-produto-scan').textContent = unidadeFormatada;
+    document.getElementById('unidade-movimentacao-scan').textContent = unidadeFormatada;
     resultDiv.style.display = 'block';
     btnCadastrar.style.display = 'none';
     mostrarMensagem(msgDiv, 'Produto encontrado!', 'sucesso');
@@ -75,6 +79,7 @@ async function movimentarEstoque(tipo) {
 
     // Atualiza a quantidade exibida
     document.getElementById('qtd-produto-scan').textContent = resposta.product.quantity;
+    document.getElementById('unidade-produto-scan').textContent = formatarUnidadeProduto(resposta.product.unit);
     produtoScan = resposta.product;
     mostrarToast(tipo + ' registrada com sucesso!');
   } catch (err) {
